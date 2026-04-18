@@ -3,27 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LOA Center</title>
+  <title>Aegis Leave Portal | LOA Center</title>
+  <meta name="description" content="Aegis Leave Portal LOA request and approval center." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
   <div class="dashboard-shell">
     <aside class="sidebar">
-      <a href="dashboard.html" class="nav-link">Back to Dashboard</a>
+      <div>
+        <div class="sidebar-brand">
+          <div class="logo-mark">A</div>
+          <div>
+            <p class="eyebrow">Aegis Leave Portal</p>
+            <h1>LOA Center</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link active" href="loa.html">LOA Center</a>
+        </nav>
+      </div>
+
+      <button id="logoutButton" class="secondary-btn full-width" type="button">Sign Out</button>
     </aside>
 
     <main class="dashboard-main">
-      <h2>LOA Center</h2>
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Leave of Absence</p>
+          <h2>Requests and approvals</h2>
+          <p id="loaIntroMeta" class="muted">Submit LOA requests and review eligible approvals.</p>
+        </div>
+      </header>
 
-      <form id="loaForm" class="form-grid">
-        <input type="date" id="startDate" required />
-        <input type="date" id="endDate" required />
-        <textarea id="reason" placeholder="Reason" required></textarea>
-        <button class="primary-btn">Submit LOA</button>
-      </form>
+      <div id="statusBanner" class="status-banner hidden"></div>
 
-      <h3>Your LOAs</h3>
-      <div id="loaList"></div>
+      <section class="content-grid single-column-grid">
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">New Request</p>
+              <h3>Submit an LOA</h3>
+            </div>
+          </div>
+
+          <form id="loaForm" class="form-grid">
+            <label>
+              <span>Start Date</span>
+              <input type="date" id="startDate" required />
+            </label>
+
+            <label>
+              <span>End Date</span>
+              <input type="date" id="endDate" required />
+            </label>
+
+            <label>
+              <span>Reason</span>
+              <textarea id="reason" rows="5" placeholder="Enter the reason for your leave request" required></textarea>
+            </label>
+
+            <button id="submitLoaButton" class="primary-btn" type="submit">Submit LOA</button>
+          </form>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">History</p>
+              <h3>Your LOAs</h3>
+            </div>
+          </div>
+          <div id="loaList" class="card-list"></div>
+        </article>
+
+        <article id="approvalsPanel" class="panel-card hidden">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Approvals</p>
+              <h3>Requests awaiting your review</h3>
+            </div>
+          </div>
+          <div id="approvalList" class="card-list"></div>
+        </article>
+      </section>
     </main>
   </div>
 
