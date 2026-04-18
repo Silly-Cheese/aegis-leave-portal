@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aegis Leave Portal | Companies</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="admin.html" class="nav-link">Admin</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h2>Company Management</h2>
+
+      <div id="statusBanner" class="status-banner hidden"></div>
+
+      <form id="createCompanyForm" class="form-grid">
+        <input id="companyIdInput" placeholder="Company ID" required />
+        <input id="companyNameInput" placeholder="Company Name" required />
+        <select id="companyTypeInput">
+          <option value="managing_company">Managing Company</option>
+          <option value="customer">Customer</option>
+        </select>
+        <button class="primary-btn">Create Company</button>
+      </form>
+
+      <h3>Companies</h3>
+      <div id="companyList"></div>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/companies.js"></script>
+</body>
+</html>
