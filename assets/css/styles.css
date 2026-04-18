@@ -1,0 +1,106 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: #f5f7fa;
+  color: #0a0a0a;
+}
+
+.page-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.brand-panel {
+  width: 45%;
+  background: linear-gradient(135deg, #0B1F3A, #1F3A5F);
+  color: white;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.logo-mark {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: #D4AF37;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+  color: #0B1F3A;
+}
+
+.brand-top {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.brand-copy h2 {
+  margin-top: 30px;
+  font-size: 24px;
+}
+
+.feature-card {
+  background: rgba(255,255,255,0.1);
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 15px;
+}
+
+.auth-panel {
+  width: 55%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: 420px;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.primary-btn {
+  background: #D4AF37;
+  color: #0B1F3A;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.secondary-btn {
+  background: #e5e7eb;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
