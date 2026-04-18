@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LOA Center</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <a href="dashboard.html" class="nav-link">Back to Dashboard</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h2>LOA Center</h2>
+
+      <form id="loaForm" class="form-grid">
+        <input type="date" id="startDate" required />
+        <input type="date" id="endDate" required />
+        <textarea id="reason" placeholder="Reason" required></textarea>
+        <button class="primary-btn">Submit LOA</button>
+      </form>
+
+      <h3>Your LOAs</h3>
+      <div id="loaList"></div>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/loa.js"></script>
+</body>
+</html>
