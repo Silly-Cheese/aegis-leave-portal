@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aegis Leave Portal | Dashboard</title>
+  <meta name="description" content="Aegis Leave Portal dashboard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">
+          <div class="logo-mark">A</div>
+          <div>
+            <p class="eyebrow">Aegis Leave Portal</p>
+            <h1>Control Panel</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link active" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="loa.html">LOA Center</a>
+          <a class="nav-link" href="#" id="comingSoonAccounts">Accounts</a>
+          <a class="nav-link" href="#" id="comingSoonApprovals">Approvals</a>
+        </nav>
+      </div>
+
+      <button id="logoutButton" class="secondary-btn full-width" type="button">Sign Out</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Overview</p>
+          <h2 id="welcomeHeading">Welcome</h2>
+          <p id="welcomeMeta" class="muted">Loading account details...</p>
+        </div>
+      </header>
+
+      <div id="statusBanner" class="status-banner hidden"></div>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span>Account Type</span>
+          <strong id="statAccountType">—</strong>
+          <p>High-level account classification.</p>
+        </article>
+        <article class="stat-card">
+          <span>Role</span>
+          <strong id="statRole">—</strong>
+          <p>Your active portal role.</p>
+        </article>
+        <article class="stat-card">
+          <span>Company</span>
+          <strong id="statCompany">—</strong>
+          <p>Current assigned organization.</p>
+        </article>
+        <article class="stat-card">
+          <span>Status</span>
+          <strong id="statStatus">Active</strong>
+          <p>Account access and portal readiness.</p>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Quick Access</p>
+              <h3>Primary actions</h3>
+            </div>
+          </div>
+          <div class="button-grid">
+            <a class="primary-btn button-link" href="loa.html">Open LOA Center</a>
+            <button class="secondary-btn" type="button" id="requestOwnLoa">Request LOA</button>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Permissions</p>
+              <h3>What you can currently do</h3>
+            </div>
+          </div>
+          <ul id="permissionList" class="permission-list"></ul>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/dashboard.js"></script>
+</body>
+</html>
