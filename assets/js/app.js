@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, updatePassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmBLwVBVhY29tnMMHH-kVHo77OILX7PTM",
@@ -19,59 +19,117 @@ const loginForm = document.getElementById("loginForm");
 const passwordChangeForm = document.getElementById("passwordChangeForm");
 const accountPanel = document.getElementById("accountPanel");
 const statusBanner = document.getElementById("statusBanner");
+const loginButton = document.getElementById("loginButton");
+const passwordChangeButton = document.getElementById("passwordChangeButton");
 
 let currentUserDoc = null;
 
-function showStatus(message, type = "info") {
+function showStatus(message) {
   statusBanner.textContent = message;
   statusBanner.classList.remove("hidden");
 }
 
+function clearStatus() {
+  statusBanner.textContent = "";
+  statusBanner.classList.add("hidden");
+}
+
+function setButtonBusy(button, busyText, isBusy) {
+  if (!button) return;
+  button.disabled = isBusy;
+  if (isBusy) {
+    button.dataset.originalText = button.textContent;
+    button.textContent = busyText;
+  } else if (button.dataset.originalText) {
+    button.textContent = button.dataset.originalText;
+  }
+}
+
+async function loadUserByLoginKey(loginKey) {
+  const q = query(collection(db, "users"), where("loginKey", "==", loginKey));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const userDoc = snapshot.docs[0];
+  return { id: userDoc.id, ...userDoc.data() };
+}
+
+function routeAuthenticatedUser() {
+  if (currentUserDoc?.mustChangePassword) {
+    loginForm.classList.add("hidden");
+    passwordChangeForm.classList.remove("hidden");
+    accountPanel.classList.add("hidden");
+    showStatus("You must change your password before continuing.");
+    return;
+  }
+
+  window.location.href = "dashboard.html";
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  if (!currentUserDoc) {
+    accountPanel.classList.remove("hidden");
+    document.getElementById("summaryName").textContent = "Authenticated";
+    document.getElementById("summaryMeta").textContent = "Session detected";
+  }
+});
+
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  clearStatus();
+  setButtonBusy(loginButton, "Signing In...", true);
 
-  const username = document.getElementById("username").value.toLowerCase();
+  const username = document.getElementById("username").value.trim().toLowerCase();
   const password = document.getElementById("password").value;
 
   try {
-    const q = query(collection(db, "users"), where("loginKey", "==", username));
-    const snapshot = await getDocs(q);
+    const userData = await loadUserByLoginKey(username);
 
-    if (snapshot.empty) {
+    if (!userData) {
       showStatus("User not found.");
       return;
     }
 
-    const userDoc = snapshot.docs[0];
-    const userData = userDoc.data();
-
-    currentUserDoc = { id: userDoc.id, ...userData };
-
-    const userCredential = await signInWithEmailAndPassword(auth, userData.authEmail, password);
-
-    if (userData.mustChangePassword) {
-      loginForm.classList.add("hidden");
-      passwordChangeForm.classList.remove("hidden");
-      showStatus("You must change your password before continuing.");
+    if (userData.active === false) {
+      showStatus("This account is inactive.");
       return;
     }
 
-    showAccount();
+    currentUserDoc = userData;
 
+    await signInWithEmailAndPassword(auth, userData.authEmail, password);
+
+    await updateDoc(doc(db, "users", currentUserDoc.id), {
+      lastLoginAt: serverTimestamp()
+    });
+
+    routeAuthenticatedUser();
   } catch (err) {
-    showStatus("Login failed.");
     console.error(err);
+    showStatus("Login failed. Please verify your username and password.");
+  } finally {
+    setButtonBusy(loginButton, "Signing In...", false);
   }
 });
 
 passwordChangeForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  clearStatus();
+  setButtonBusy(passwordChangeButton, "Updating...", true);
 
   const newPassword = document.getElementById("newPassword").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
 
+  if (newPassword.length < 8) {
+    showStatus("Your new password must be at least 8 characters long.");
+    setButtonBusy(passwordChangeButton, "Updating...", false);
+    return;
+  }
+
   if (newPassword !== confirmPassword) {
     showStatus("Passwords do not match.");
+    setButtonBusy(passwordChangeButton, "Updating...", false);
     return;
   }
 
@@ -79,22 +137,23 @@ passwordChangeForm.addEventListener("submit", async (e) => {
     await updatePassword(auth.currentUser, newPassword);
 
     await updateDoc(doc(db, "users", currentUserDoc.id), {
-      mustChangePassword: false
+      mustChangePassword: false,
+      tempPasswordIssued: false,
+      passwordUpdatedAt: serverTimestamp()
     });
 
-    passwordChangeForm.classList.add("hidden");
-    showAccount();
-
+    currentUserDoc.mustChangePassword = false;
+    showStatus("Password updated successfully. Redirecting to dashboard...");
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 700);
   } catch (err) {
-    showStatus("Password update failed.");
+    console.error(err);
+    showStatus("Password update failed. Please try again.");
+  } finally {
+    setButtonBusy(passwordChangeButton, "Updating...", false);
   }
 });
-
-function showAccount() {
-  accountPanel.classList.remove("hidden");
-  document.getElementById("summaryName").textContent = currentUserDoc.discordUsername;
-  document.getElementById("summaryMeta").textContent = `${currentUserDoc.role} • ${currentUserDoc.accountType}`;
-}
 
 document.getElementById("logoutButton").addEventListener("click", async () => {
   await signOut(auth);
