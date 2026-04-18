@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aegis Leave Portal | Dashboard</title>
-  <meta name="description" content="Aegis Leave Portal dashboard." />
+  <meta name="description" content="Aegis Leave Portal main dashboard." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,8 +25,9 @@
         <nav class="sidebar-nav">
           <a class="nav-link active" href="dashboard.html">Dashboard</a>
           <a class="nav-link" href="loa.html">LOA Center</a>
-          <a class="nav-link" href="#" id="comingSoonAccounts">Accounts</a>
-          <a class="nav-link" href="#" id="comingSoonApprovals">Approvals</a>
+          <a class="nav-link" href="admin.html">Accounts</a>
+          <a class="nav-link" href="companies.html">Companies</a>
+          <a class="nav-link" href="audit.html">Audit Logs</a>
         </nav>
       </div>
 
@@ -50,16 +51,19 @@
           <strong id="statAccountType">—</strong>
           <p>High-level account classification.</p>
         </article>
+
         <article class="stat-card">
           <span>Role</span>
           <strong id="statRole">—</strong>
           <p>Your active portal role.</p>
         </article>
+
         <article class="stat-card">
           <span>Company</span>
           <strong id="statCompany">—</strong>
           <p>Current assigned organization.</p>
         </article>
+
         <article class="stat-card">
           <span>Status</span>
           <strong id="statStatus">Active</strong>
@@ -75,9 +79,12 @@
               <h3>Primary actions</h3>
             </div>
           </div>
+
           <div class="button-grid">
             <a class="primary-btn button-link" href="loa.html">Open LOA Center</a>
-            <button class="secondary-btn" type="button" id="requestOwnLoa">Request LOA</button>
+            <a class="secondary-btn button-link" href="admin.html">Open Accounts</a>
+            <a class="secondary-btn button-link" href="companies.html">Open Companies</a>
+            <a class="secondary-btn button-link" href="audit.html">Open Audit Logs</a>
           </div>
         </article>
 
@@ -89,6 +96,72 @@
             </div>
           </div>
           <ul id="permissionList" class="permission-list"></ul>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Workspace</p>
+              <h3>System areas</h3>
+            </div>
+          </div>
+
+          <div class="card-list">
+            <div class="loa-card">
+              <strong>LOA Center</strong>
+              <p>Submit leave requests, review leave history, and process approvals when your role allows it.</p>
+              <a class="primary-btn button-link" href="loa.html">Go to LOA Center</a>
+            </div>
+
+            <div class="loa-card">
+              <strong>Accounts</strong>
+              <p>Create portal users, assign roles, and manage access for your organization.</p>
+              <a class="secondary-btn button-link" href="admin.html">Go to Accounts</a>
+            </div>
+
+            <div class="loa-card">
+              <strong>Companies</strong>
+              <p>Create and maintain company records for managing-company and customer-side access structure.</p>
+              <a class="secondary-btn button-link" href="companies.html">Go to Companies</a>
+            </div>
+
+            <div class="loa-card">
+              <strong>Audit Logs</strong>
+              <p>Review accountability records and major actions across the platform.</p>
+              <a class="secondary-btn button-link" href="audit.html">Go to Audit Logs</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Getting Started</p>
+              <h3>Recommended setup order</h3>
+            </div>
+          </div>
+
+          <div class="card-list">
+            <div class="loa-card">
+              <strong>1. Confirm your owner account</strong>
+              <p>Make sure your Aegis owner account can sign in and complete the first password change.</p>
+            </div>
+
+            <div class="loa-card">
+              <strong>2. Create any additional companies</strong>
+              <p>Add customer organizations before assigning users into them.</p>
+            </div>
+
+            <div class="loa-card">
+              <strong>3. Create staff accounts</strong>
+              <p>Use the Accounts page to create additional users and issue temporary passwords.</p>
+            </div>
+
+            <div class="loa-card">
+              <strong>4. Begin LOA usage</strong>
+              <p>Staff can begin submitting leave requests and management can handle approvals.</p>
+            </div>
+          </div>
         </article>
       </section>
     </main>
