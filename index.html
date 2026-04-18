@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aegis Leave Portal</title>
+  <meta name="description" content="Aegis Leave Portal login and first-time password update system." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <aside class="brand-panel">
+      <div class="brand-top">
+        <div class="logo-mark">A</div>
+        <div>
+          <p class="eyebrow">Secure Leave Management</p>
+          <h1>Aegis Leave Portal</h1>
+        </div>
+      </div>
+
+      <div class="brand-copy">
+        <h2>Protected leave workflows for managing companies and customer organizations.</h2>
+        <p>
+          Centralized LOA requests, approvals, customer account control, and a secure first-login password change workflow.
+        </p>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-card">
+          <span>Role-Based Access</span>
+          <p>Managing Company and Customer accounts with tiered permissions.</p>
+        </div>
+        <div class="feature-card">
+          <span>First-Login Protection</span>
+          <p>Temporary password flow with mandatory password change enforcement.</p>
+        </div>
+        <div class="feature-card">
+          <span>Audit-Ready Design</span>
+          <p>Built to support clean records, approvals, and future logs.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="auth-panel">
+      <div class="auth-card">
+        <div class="card-header">
+          <p class="eyebrow">Portal Access</p>
+          <h2>Sign in</h2>
+          <p class="muted">
+            Sign in using your Discord username and password. If your account was newly created,
+            you may be prompted to update your temporary password immediately.
+          </p>
+        </div>
+
+        <div id="statusBanner" class="status-banner hidden"></div>
+
+        <form id="loginForm" class="form-grid" autocomplete="on">
+          <label>
+            <span>Discord Username</span>
+            <input id="username" type="text" placeholder="Enter your Discord username" autocomplete="username" required />
+          </label>
+
+          <label>
+            <span>Password</span>
+            <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+          </label>
+
+          <button id="loginButton" type="submit" class="primary-btn">Sign In</button>
+        </form>
+
+        <form id="passwordChangeForm" class="form-grid hidden" autocomplete="off">
+          <div class="section-divider">
+            <span>First-Time Password Update</span>
+          </div>
+
+          <label>
+            <span>New Password</span>
+            <input id="newPassword" type="password" placeholder="Create a new password" minlength="8" required />
+          </label>
+
+          <label>
+            <span>Confirm New Password</span>
+            <input id="confirmPassword" type="password" placeholder="Re-enter your new password" minlength="8" required />
+          </label>
+
+          <button id="passwordChangeButton" type="submit" class="primary-btn">Update Password</button>
+        </form>
+
+        <div id="accountPanel" class="account-panel hidden">
+          <div class="section-divider">
+            <span>Signed In</span>
+          </div>
+
+          <div class="account-summary">
+            <div>
+              <strong id="summaryName">—</strong>
+              <p id="summaryMeta" class="muted">—</p>
+            </div>
+            <button id="logoutButton" class="secondary-btn" type="button">Sign Out</button>
+          </div>
+
+          <div class="dashboard-preview">
+            <h3>Portal access established</h3>
+            <p>
+              The main LOA dashboard, account management, request routing, approvals, and audit interfaces
+              will connect here in the next file batch.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
