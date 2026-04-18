@@ -25,18 +25,17 @@ const createUserButton = document.getElementById("createUserButton");
 let currentAdminData = null;
 
 function showStatus(msg) {
-  statusBanner.textContent = msg;
+  statusBanner.innerHTML = msg;
   statusBanner.classList.remove("hidden");
 }
 
 function clearStatus() {
-  statusBanner.textContent = "";
+  statusBanner.innerHTML = "";
   statusBanner.classList.add("hidden");
 }
 
-function generateTempPassword() {
-  const random = Math.random().toString(36).slice(2, 10);
-  return `${random}A!7`;
+function getDefaultTempPassword() {
+  return "AegisTemp!2026";
 }
 
 function normalizeRole(role) {
@@ -127,6 +126,7 @@ onAuthStateChanged(auth, async (user) => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   clearStatus();
+
   createUserButton.disabled = true;
   createUserButton.dataset.originalText = createUserButton.dataset.originalText || createUserButton.textContent;
   createUserButton.textContent = "Creating User...";
@@ -146,7 +146,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  const tempPassword = generateTempPassword();
+  const tempPassword = getDefaultTempPassword();
 
   try {
     const cred = await createUserWithEmailAndPassword(secondaryAuth, authEmail, tempPassword);
@@ -168,7 +168,12 @@ form.addEventListener("submit", async (e) => {
       lastLoginAt: null
     });
 
-    showStatus(`User created successfully. Temporary password: ${tempPassword}`);
+    showStatus(`
+      <strong>User created successfully.</strong><br>
+      Temporary password: <strong>${tempPassword}</strong><br>
+      Tell the user to sign in once and immediately change it.
+    `);
+
     form.reset();
     await signOut(secondaryAuth);
     await loadUsers();
