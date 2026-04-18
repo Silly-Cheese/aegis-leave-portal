@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aegis Leave Portal | Admin Panel</title>
+  <meta name="description" content="Aegis Leave Portal account administration panel." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">
+          <div class="logo-mark">A</div>
+          <div>
+            <p class="eyebrow">Aegis Leave Portal</p>
+            <h1>Admin Panel</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="loa.html">LOA Center</a>
+          <a class="nav-link active" href="admin.html">Admin Panel</a>
+        </nav>
+      </div>
+
+      <button id="logoutButton" class="secondary-btn full-width" type="button">Sign Out</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Account Administration</p>
+          <h2>Create and review user accounts</h2>
+          <p class="muted">Owner-level setup for managing company and customer portal users.</p>
+        </div>
+      </header>
+
+      <div id="statusBanner" class="status-banner hidden"></div>
+
+      <section class="content-grid single-column-grid">
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">New User</p>
+              <h3>Create an account</h3>
+            </div>
+          </div>
+
+          <form id="createUserForm" class="form-grid two-column-form">
+            <label>
+              <span>Discord Username</span>
+              <input id="discordUsername" type="text" placeholder="Enter Discord username" required />
+            </label>
+
+            <label>
+              <span>Hidden Auth Email</span>
+              <input id="authEmail" type="email" placeholder="user@aegis.local" required />
+            </label>
+
+            <label>
+              <span>Account Type</span>
+              <select id="accountType" required>
+                <option value="managing_company">Managing Company</option>
+                <option value="customer">Customer</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Role</span>
+              <select id="role" required>
+                <option value="owner">Owner</option>
+                <option value="account_manager">Account Manager</option>
+                <option value="management">Management</option>
+                <option value="staff">Staff</option>
+                <option value="company_owner">Company Owner</option>
+                <option value="loa_manager">LOA Manager</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Company ID</span>
+              <input id="companyId" type="text" placeholder="main or customer-company-id" required />
+            </label>
+
+            <label>
+              <span>Company Name</span>
+              <input id="companyName" type="text" placeholder="Company display name" required />
+            </label>
+
+            <div class="form-actions full-span">
+              <button id="createUserButton" class="primary-btn" type="submit">Create User</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Created Accounts</p>
+              <h3>Existing portal users</h3>
+            </div>
+          </div>
+          <div id="userList" class="card-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/admin.js"></script>
+</body>
+</html>
