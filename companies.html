@@ -39,7 +39,7 @@
         <div>
           <p class="eyebrow">Company Administration</p>
           <h2>Create and manage company records</h2>
-          <p class="muted">Aegis uses company records to keep users and leave operations tied to valid organizational entities.</p>
+          <p class="muted">Select a company to open its staff, LOA records, and company-specific actions.</p>
         </div>
       </header>
 
@@ -86,6 +86,14 @@
               <h3>Current system companies</h3>
             </div>
           </div>
+
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <label>
+              <span>Search Companies</span>
+              <input id="companySearchInput" type="text" placeholder="Search by company name or ID" />
+            </label>
+          </div>
+
           <div id="companyList" class="card-list"></div>
         </article>
       </section>
