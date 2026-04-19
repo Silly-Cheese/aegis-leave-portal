@@ -18,7 +18,7 @@
           <div class="logo-mark">A</div>
           <div>
             <p class="eyebrow">Aegis Leave Portal</p>
-            <h1>Control Panel</h1>
+            <h1>Dashboard</h1>
           </div>
         </div>
 
@@ -49,25 +49,25 @@
         <article class="stat-card">
           <span>Account Type</span>
           <strong id="statAccountType">—</strong>
-          <p>High-level account classification.</p>
+          <p class="muted">Whether you are part of Aegis or a customer organization.</p>
         </article>
 
         <article class="stat-card">
           <span>Role</span>
           <strong id="statRole">—</strong>
-          <p>Your active portal role.</p>
+          <p class="muted">Your current authority level inside the system.</p>
         </article>
 
         <article class="stat-card">
           <span>Company</span>
           <strong id="statCompany">—</strong>
-          <p>Current assigned organization.</p>
+          <p class="muted">The organization your account is currently assigned to.</p>
         </article>
 
         <article class="stat-card">
           <span>Status</span>
           <strong id="statStatus">Active</strong>
-          <p>Account access and portal readiness.</p>
+          <p class="muted">Current access and operational standing.</p>
         </article>
       </section>
 
@@ -75,8 +75,8 @@
         <article class="panel-card">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Quick Access</p>
-              <h3>Primary actions</h3>
+              <p class="eyebrow">Quick Actions</p>
+              <h3>Core system areas</h3>
             </div>
           </div>
 
@@ -91,8 +91,8 @@
         <article class="panel-card">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Permissions</p>
-              <h3>What you can currently do</h3>
+              <p class="eyebrow">Authority Summary</p>
+              <h3>Current permission profile</h3>
             </div>
           </div>
           <ul id="permissionList" class="permission-list"></ul>
@@ -101,33 +101,61 @@
         <article class="panel-card">
           <div class="panel-heading">
             <div>
+              <p class="eyebrow">Role Snapshot</p>
+              <h3>What your role is built for</h3>
+            </div>
+          </div>
+
+          <div id="roleBadgeRow" class="badge-row">
+            <span class="badge badge-neutral">Loading...</span>
+          </div>
+
+          <div class="metric-grid" style="margin-top: 16px;">
+            <div class="metric-box">
+              <span>Account Operations</span>
+              <strong id="metricAccounts">Pending role logic</strong>
+            </div>
+            <div class="metric-box">
+              <span>LOA Authority</span>
+              <strong id="metricLoa">Pending role logic</strong>
+            </div>
+            <div class="metric-box">
+              <span>Record Access</span>
+              <strong id="metricRecords">Pending role logic</strong>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
               <p class="eyebrow">Workspace</p>
-              <h3>System areas</h3>
+              <h3>System navigation</h3>
             </div>
           </div>
 
           <div class="card-list">
-            <div class="loa-card">
+            <div class="dashboard-tile">
               <strong>LOA Center</strong>
-              <p>Submit leave requests, review leave history, and process approvals when your role allows it.</p>
+              <p>Submit leave requests, review leave history, approve or deny requests, and end LOAs early where your authority allows it.</p>
               <a class="primary-btn button-link" href="loa.html">Go to LOA Center</a>
             </div>
 
-            <div class="loa-card">
+            <div class="dashboard-tile">
               <strong>Accounts</strong>
-              <p>Create portal users, assign roles, and manage access for your organization.</p>
+              <p>Create and manage portal users, issue temporary credentials, and control access based on Aegis or customer authority.</p>
               <a class="secondary-btn button-link" href="admin.html">Go to Accounts</a>
             </div>
 
-            <div class="loa-card">
+            <div class="dashboard-tile">
               <strong>Companies</strong>
-              <p>Create and maintain company records for managing-company and customer-side access structure.</p>
+              <p>Maintain the organizations that exist in the portal and keep users tied to valid company records.</p>
               <a class="secondary-btn button-link" href="companies.html">Go to Companies</a>
             </div>
 
-            <div class="loa-card">
+            <div class="dashboard-tile">
               <strong>Audit Logs</strong>
-              <p>Review accountability records and major actions across the platform.</p>
+              <p>Review accountability records and major system activity across the platform.</p>
               <a class="secondary-btn button-link" href="audit.html">Go to Audit Logs</a>
             </div>
           </div>
@@ -136,30 +164,56 @@
         <article class="panel-card">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Getting Started</p>
-              <h3>Recommended setup order</h3>
+              <p class="eyebrow">Aegis Structure</p>
+              <h3>Operational authority model</h3>
             </div>
           </div>
 
           <div class="card-list">
             <div class="loa-card">
-              <strong>1. Confirm your owner account</strong>
-              <p>Make sure your Aegis owner account can sign in and complete the first password change.</p>
+              <strong>Owner</strong>
+              <p>Full control over users, companies, LOAs, audit visibility, and system-wide administration.</p>
             </div>
 
             <div class="loa-card">
-              <strong>2. Create any additional companies</strong>
-              <p>Add customer organizations before assigning users into them.</p>
+              <strong>Account Manager</strong>
+              <p>Can add, edit, and delete people and customer companies, and can add, edit, delete, and end LOAs early across Aegis and customer companies.</p>
             </div>
 
             <div class="loa-card">
-              <strong>3. Create staff accounts</strong>
-              <p>Use the Accounts page to create additional users and issue temporary passwords.</p>
+              <strong>Community Manager</strong>
+              <p>Can add people within Aegis only and support internal personnel operations without customer-company administration.</p>
             </div>
 
             <div class="loa-card">
-              <strong>4. Begin LOA usage</strong>
-              <p>Staff can begin submitting leave requests and management can handle approvals.</p>
+              <strong>Staff</strong>
+              <p>Can request LOAs and pull up records for customers based on approved system access.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Customer Structure</p>
+              <h3>Customer-side authority model</h3>
+            </div>
+          </div>
+
+          <div class="card-list">
+            <div class="loa-card">
+              <strong>Company Owner</strong>
+              <p>Can manage company people, oversee approvals, and end subordinate LOAs early.</p>
+            </div>
+
+            <div class="loa-card">
+              <strong>LOA Manager</strong>
+              <p>Can manage customer leave workflows and end subordinate staff LOAs early.</p>
+            </div>
+
+            <div class="loa-card">
+              <strong>Staff</strong>
+              <p>Can request LOAs and view their own leave records.</p>
             </div>
           </div>
         </article>
