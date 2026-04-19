@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aegis Leave Portal | Admin Panel</title>
-  <meta name="description" content="Aegis Leave Portal account administration panel." />
+  <title>Aegis Leave Portal | Accounts</title>
+  <meta name="description" content="Aegis Leave Portal account administration." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,14 +18,16 @@
           <div class="logo-mark">A</div>
           <div>
             <p class="eyebrow">Aegis Leave Portal</p>
-            <h1>Admin Panel</h1>
+            <h1>Accounts</h1>
           </div>
         </div>
 
         <nav class="sidebar-nav">
           <a class="nav-link" href="dashboard.html">Dashboard</a>
           <a class="nav-link" href="loa.html">LOA Center</a>
-          <a class="nav-link active" href="admin.html">Admin Panel</a>
+          <a class="nav-link active" href="admin.html">Accounts</a>
+          <a class="nav-link" href="companies.html">Companies</a>
+          <a class="nav-link" href="audit.html">Audit Logs</a>
         </nav>
       </div>
 
@@ -36,8 +38,8 @@
       <header class="dashboard-header">
         <div>
           <p class="eyebrow">Account Administration</p>
-          <h2>Create and review user accounts</h2>
-          <p class="muted">Owner-level setup for managing company and customer portal users.</p>
+          <h2>Create and manage portal users</h2>
+          <p class="muted">Aegis-side roles and customer-side roles are separated by authority.</p>
         </div>
       </header>
 
@@ -47,8 +49,8 @@
         <article class="panel-card">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">New User</p>
-              <h3>Create an account</h3>
+              <p class="eyebrow">Create User</p>
+              <h3>New account setup</h3>
             </div>
           </div>
 
@@ -59,14 +61,9 @@
             </label>
 
             <label>
-              <span>Hidden Auth Email</span>
-              <input id="authEmail" type="email" placeholder="user@aegis.local" required />
-            </label>
-
-            <label>
               <span>Account Type</span>
               <select id="accountType" required>
-                <option value="managing_company">Managing Company</option>
+                <option value="managing_company">Aegis</option>
                 <option value="customer">Customer</option>
               </select>
             </label>
@@ -74,24 +71,27 @@
             <label>
               <span>Role</span>
               <select id="role" required>
-                <option value="owner">Owner</option>
-                <option value="account_manager">Account Manager</option>
-                <option value="management">Management</option>
-                <option value="staff">Staff</option>
-                <option value="company_owner">Company Owner</option>
-                <option value="loa_manager">LOA Manager</option>
+                <option value="">Select a role</option>
               </select>
             </label>
 
             <label>
               <span>Company ID</span>
-              <input id="companyId" type="text" placeholder="main or customer-company-id" required />
+              <input id="companyId" type="text" placeholder="aegis or customer-company-id" required />
             </label>
 
-            <label>
+            <label class="full-span">
               <span>Company Name</span>
               <input id="companyName" type="text" placeholder="Company display name" required />
             </label>
+
+            <div class="full-span">
+              <div class="loa-card">
+                <strong>Automatic Credentials</strong>
+                <p>Hidden authentication emails will be auto-generated during the rebuild of the account logic layer. Temporary passwords should be clearly shown after account creation.</p>
+                <span>This page is now structured for the new admin flow.</span>
+              </div>
+            </div>
 
             <div class="form-actions full-span">
               <button id="createUserButton" class="primary-btn" type="submit">Create User</button>
@@ -102,8 +102,31 @@
         <article class="panel-card">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Created Accounts</p>
-              <h3>Existing portal users</h3>
+              <p class="eyebrow">Role Reference</p>
+              <h3>Authority model</h3>
+            </div>
+          </div>
+
+          <div class="content-grid">
+            <div class="loa-card">
+              <strong>Aegis Roles</strong>
+              <p>Owner, Account Manager, Community Manager, and Staff are the internal Aegis-side roles.</p>
+              <span>Internal oversight authority</span>
+            </div>
+
+            <div class="loa-card">
+              <strong>Customer Roles</strong>
+              <p>Company Owner, LOA Manager, and Staff are the customer-side roles.</p>
+              <span>Customer organization authority</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Existing Users</p>
+              <h3>Current portal accounts</h3>
             </div>
           </div>
           <div id="userList" class="card-list"></div>
