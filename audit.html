@@ -4,21 +4,58 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aegis Leave Portal | Audit Logs</title>
+  <meta name="description" content="Aegis Leave Portal audit log viewer." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
   <div class="dashboard-shell">
     <aside class="sidebar">
-      <a href="dashboard.html" class="nav-link">Dashboard</a>
-      <a href="admin.html" class="nav-link">Admin</a>
-      <a href="companies.html" class="nav-link">Companies</a>
-      <a href="audit.html" class="nav-link active">Audit Logs</a>
+      <div>
+        <div class="sidebar-brand">
+          <div class="logo-mark">A</div>
+          <div>
+            <p class="eyebrow">Aegis Leave Portal</p>
+            <h1>Audit Logs</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="loa.html">LOA Center</a>
+          <a class="nav-link" href="admin.html">Accounts</a>
+          <a class="nav-link" href="companies.html">Companies</a>
+          <a class="nav-link active" href="audit.html">Audit Logs</a>
+        </nav>
+      </div>
+
+      <button id="logoutButton" class="secondary-btn full-width" type="button">Sign Out</button>
     </aside>
 
     <main class="dashboard-main">
-      <h2>Audit Logs</h2>
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Accountability</p>
+          <h2>Audit log records</h2>
+          <p class="muted">Review the actions recorded across the portal.</p>
+        </div>
+      </header>
+
       <div id="statusBanner" class="status-banner hidden"></div>
-      <div id="auditList" class="card-list"></div>
+
+      <section class="content-grid single-column-grid">
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Audit Trail</p>
+              <h3>Recorded system actions</h3>
+            </div>
+          </div>
+          <div id="auditList" class="card-list"></div>
+        </article>
+      </section>
     </main>
   </div>
 
