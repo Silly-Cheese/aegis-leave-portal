@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDocs, getDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmBLwVBVhY29tnMMHH-kVHo77OILX7PTM",
@@ -18,8 +18,10 @@ const db = getFirestore(app);
 const companyList = document.getElementById("companyList");
 const createCompanyForm = document.getElementById("createCompanyForm");
 const statusBanner = document.getElementById("statusBanner");
+const companySearchInput = document.getElementById("companySearchInput");
 
 let currentUserData = null;
+let companies = [];
 
 function showStatus(message) {
   statusBanner.textContent = message;
@@ -49,9 +51,50 @@ function canManageCompanies(userData) {
     ["owner", "account_manager"].includes(normalizeRole(userData.role));
 }
 
+function canDeleteCompanies(userData) {
+  return userData?.accountType === "managing_company" && normalizeRole(userData?.role) === "owner";
+}
+
 function buildCompanyCard(data) {
   const card = document.createElement("div");
   card.className = "loa-card";
+
+  const actions = document.createElement("div");
+  actions.className = "button-grid";
+
+  const openBtn = document.createElement("button");
+  openBtn.className = "primary-btn";
+  openBtn.type = "button";
+  openBtn.textContent = "Open Company";
+  openBtn.addEventListener("click", () => {
+    window.location.href = `company-view.html?companyId=${encodeURIComponent(data.companyId)}`;
+  });
+
+  actions.appendChild(openBtn);
+
+  if (canDeleteCompanies(currentUserData) && data.companyId !== "aegis") {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "secondary-btn";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Delete Company";
+    deleteBtn.addEventListener("click", async () => {
+      const confirmation = prompt(`Type DELETE to remove ${data.companyName}.`);
+      if (confirmation !== "DELETE") {
+        showStatus("Company deletion cancelled.");
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "companies", data.companyId));
+        showStatus("Company deleted successfully.");
+        await loadCompanies();
+      } catch (error) {
+        console.error(error);
+        showStatus("Failed to delete company.");
+      }
+    });
+    actions.appendChild(deleteBtn);
+  }
 
   card.innerHTML = `
     <strong>${data.companyName}</strong>
@@ -59,7 +102,27 @@ function buildCompanyCard(data) {
     <span>${data.companyType === "managing_company" ? "Aegis / Managing Company" : "Customer Company"}</span>
   `;
 
+  card.appendChild(actions);
   return card;
+}
+
+function renderCompanies(filter = "") {
+  companyList.innerHTML = "";
+
+  const normalized = filter.trim().toLowerCase();
+  const filtered = companies.filter((company) =>
+    company.companyName.toLowerCase().includes(normalized) ||
+    company.companyId.toLowerCase().includes(normalized)
+  );
+
+  if (!filtered.length) {
+    companyList.innerHTML = `<div class="loa-card"><strong>No matching companies</strong><p>No companies matched your search.</p></div>`;
+    return;
+  }
+
+  filtered.forEach((company) => {
+    companyList.appendChild(buildCompanyCard(company));
+  });
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -127,19 +190,19 @@ createCompanyForm.addEventListener("submit", async (e) => {
   }
 });
 
-async function loadCompanies() {
-  companyList.innerHTML = "";
+companySearchInput.addEventListener("input", (e) => {
+  renderCompanies(e.target.value);
+});
 
+async function loadCompanies() {
+  companies = [];
   const snapshot = await getDocs(collection(db, "companies"));
 
-  if (snapshot.empty) {
-    companyList.innerHTML = `<div class="loa-card"><strong>No companies yet</strong><p>No company records have been created yet.</p></div>`;
-    return;
-  }
-
   snapshot.forEach((docSnap) => {
-    companyList.appendChild(buildCompanyCard(docSnap.data()));
+    companies.push(docSnap.data());
   });
+
+  renderCompanies(companySearchInput.value || "");
 }
 
 document.getElementById("logoutButton").addEventListener("click", async () => {
