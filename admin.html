@@ -85,14 +85,6 @@
               <input id="companyName" type="text" placeholder="Company display name" required />
             </label>
 
-            <div class="full-span">
-              <div class="loa-card">
-                <strong>Automatic Credentials</strong>
-                <p>Hidden authentication emails will be auto-generated during the rebuild of the account logic layer. Temporary passwords should be clearly shown after account creation.</p>
-                <span>This page is now structured for the new admin flow.</span>
-              </div>
-            </div>
-
             <div class="form-actions full-span">
               <button id="createUserButton" class="primary-btn" type="submit">Create User</button>
             </div>
@@ -102,33 +94,18 @@
         <article class="panel-card">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Role Reference</p>
-              <h3>Authority model</h3>
-            </div>
-          </div>
-
-          <div class="content-grid">
-            <div class="loa-card">
-              <strong>Aegis Roles</strong>
-              <p>Owner, Account Manager, Community Manager, and Staff are the internal Aegis-side roles.</p>
-              <span>Internal oversight authority</span>
-            </div>
-
-            <div class="loa-card">
-              <strong>Customer Roles</strong>
-              <p>Company Owner, LOA Manager, and Staff are the customer-side roles.</p>
-              <span>Customer organization authority</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="panel-card">
-          <div class="panel-heading">
-            <div>
               <p class="eyebrow">Existing Users</p>
               <h3>Current portal accounts</h3>
             </div>
           </div>
+
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <label>
+              <span>Search Users</span>
+              <input id="userSearchInput" type="text" placeholder="Search by username, role, or company" />
+            </label>
+          </div>
+
           <div id="userList" class="card-list"></div>
         </article>
       </section>
