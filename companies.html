@@ -4,32 +4,91 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aegis Leave Portal | Companies</title>
+  <meta name="description" content="Aegis Leave Portal company administration." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
   <div class="dashboard-shell">
     <aside class="sidebar">
-      <a href="dashboard.html" class="nav-link">Dashboard</a>
-      <a href="admin.html" class="nav-link">Admin</a>
+      <div>
+        <div class="sidebar-brand">
+          <div class="logo-mark">A</div>
+          <div>
+            <p class="eyebrow">Aegis Leave Portal</p>
+            <h1>Companies</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="loa.html">LOA Center</a>
+          <a class="nav-link" href="admin.html">Accounts</a>
+          <a class="nav-link active" href="companies.html">Companies</a>
+          <a class="nav-link" href="audit.html">Audit Logs</a>
+        </nav>
+      </div>
+
+      <button id="logoutButton" class="secondary-btn full-width" type="button">Sign Out</button>
     </aside>
 
     <main class="dashboard-main">
-      <h2>Company Management</h2>
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Company Administration</p>
+          <h2>Create and manage company records</h2>
+          <p class="muted">Aegis uses company records to keep users and leave operations tied to valid organizational entities.</p>
+        </div>
+      </header>
 
       <div id="statusBanner" class="status-banner hidden"></div>
 
-      <form id="createCompanyForm" class="form-grid">
-        <input id="companyIdInput" placeholder="Company ID" required />
-        <input id="companyNameInput" placeholder="Company Name" required />
-        <select id="companyTypeInput">
-          <option value="managing_company">Managing Company</option>
-          <option value="customer">Customer</option>
-        </select>
-        <button class="primary-btn">Create Company</button>
-      </form>
+      <section class="content-grid single-column-grid">
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Create Company</p>
+              <h3>New company record</h3>
+            </div>
+          </div>
 
-      <h3>Companies</h3>
-      <div id="companyList"></div>
+          <form id="createCompanyForm" class="form-grid two-column-form">
+            <label>
+              <span>Company ID</span>
+              <input id="companyIdInput" type="text" placeholder="aegis or customer-company-id" required />
+            </label>
+
+            <label>
+              <span>Company Type</span>
+              <select id="companyTypeInput" required>
+                <option value="managing_company">Aegis / Managing Company</option>
+                <option value="customer">Customer Company</option>
+              </select>
+            </label>
+
+            <label class="full-span">
+              <span>Company Name</span>
+              <input id="companyNameInput" type="text" placeholder="Company display name" required />
+            </label>
+
+            <div class="form-actions full-span">
+              <button class="primary-btn" type="submit">Create Company</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Existing Companies</p>
+              <h3>Current system companies</h3>
+            </div>
+          </div>
+          <div id="companyList" class="card-list"></div>
+        </article>
+      </section>
     </main>
   </div>
 
