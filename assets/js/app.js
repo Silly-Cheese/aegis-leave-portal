@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, updatePassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -48,7 +48,9 @@ function setButtonBusy(button, busyText, isBusy) {
 async function loadUserByLoginKey(loginKey) {
   const q = query(collection(db, "users"), where("loginKey", "==", loginKey));
   const snapshot = await getDocs(q);
+
   if (snapshot.empty) return null;
+
   const userDoc = snapshot.docs[0];
   return { id: userDoc.id, ...userDoc.data() };
 }
@@ -64,16 +66,6 @@ function routeAuthenticatedUser() {
 
   window.location.href = "dashboard.html";
 }
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-
-  if (!currentUserDoc) {
-    accountPanel.classList.remove("hidden");
-    document.getElementById("summaryName").textContent = "Authenticated";
-    document.getElementById("summaryMeta").textContent = "Session detected";
-  }
-});
 
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -105,8 +97,8 @@ loginForm.addEventListener("submit", async (e) => {
     });
 
     routeAuthenticatedUser();
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     showStatus("Login failed. Please verify your username and password.");
   } finally {
     setButtonBusy(loginButton, "Signing In...", false);
@@ -144,11 +136,12 @@ passwordChangeForm.addEventListener("submit", async (e) => {
 
     currentUserDoc.mustChangePassword = false;
     showStatus("Password updated successfully. Redirecting to dashboard...");
+
     setTimeout(() => {
       window.location.href = "dashboard.html";
     }, 700);
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     showStatus("Password update failed. Please try again.");
   } finally {
     setButtonBusy(passwordChangeButton, "Updating...", false);
