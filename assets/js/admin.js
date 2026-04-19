@@ -1,4 +1,3 @@
-```javascript
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDocs, getDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
@@ -310,4 +309,3 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   await signOut(auth);
   window.location.href = "index.html";
 });
-```
