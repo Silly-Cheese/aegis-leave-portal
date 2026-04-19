@@ -26,8 +26,40 @@ function showStatus(message) {
   statusBanner.classList.remove("hidden");
 }
 
+function clearStatus() {
+  statusBanner.textContent = "";
+  statusBanner.classList.add("hidden");
+}
+
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function normalizeRole(role) {
+  return String(role || "").trim().toLowerCase();
+}
+
 function canManageCompanies(userData) {
-  return userData?.accountType === "managing_company" && ["owner", "account_manager"].includes(String(userData?.role || "").toLowerCase());
+  if (!userData) return false;
+  return userData.accountType === "managing_company" &&
+    ["owner", "account_manager"].includes(normalizeRole(userData.role));
+}
+
+function buildCompanyCard(data) {
+  const card = document.createElement("div");
+  card.className = "loa-card";
+
+  card.innerHTML = `
+    <strong>${data.companyName}</strong>
+    <p>${data.companyId}</p>
+    <span>${data.companyType === "managing_company" ? "Aegis / Managing Company" : "Customer Company"}</span>
+  `;
+
+  return card;
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -36,32 +68,45 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  const userDoc = await getDoc(doc(db, "users", user.uid));
-  if (!userDoc.exists()) {
-    window.location.href = "dashboard.html";
-    return;
-  }
+  clearStatus();
 
-  currentUserData = userDoc.data();
-
-  if (!canManageCompanies(currentUserData)) {
-    showStatus("You do not have permission to manage companies.");
-    createCompanyForm.classList.add("hidden");
-    setTimeout(() => {
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists()) {
       window.location.href = "dashboard.html";
-    }, 1200);
-    return;
-  }
+      return;
+    }
 
-  loadCompanies();
+    currentUserData = userDoc.data();
+
+    if (!canManageCompanies(currentUserData)) {
+      showStatus("You do not have permission to manage companies.");
+      createCompanyForm.classList.add("hidden");
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 1200);
+      return;
+    }
+
+    await loadCompanies();
+  } catch (error) {
+    console.error(error);
+    showStatus("Failed to load company administration.");
+  }
 });
 
 createCompanyForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  clearStatus();
 
-  const companyId = document.getElementById("companyIdInput").value.trim().toLowerCase();
+  const companyId = slugify(document.getElementById("companyIdInput").value);
   const companyName = document.getElementById("companyNameInput").value.trim();
   const companyType = document.getElementById("companyTypeInput").value;
+
+  if (!companyId || !companyName || !companyType) {
+    showStatus("All company fields are required.");
+    return;
+  }
 
   try {
     await setDoc(doc(db, "companies", companyId), {
@@ -75,27 +120,25 @@ createCompanyForm.addEventListener("submit", async (e) => {
 
     createCompanyForm.reset();
     showStatus("Company created successfully.");
-    loadCompanies();
-  } catch (err) {
-    console.error(err);
+    await loadCompanies();
+  } catch (error) {
+    console.error(error);
     showStatus("Failed to create company.");
   }
 });
 
 async function loadCompanies() {
   companyList.innerHTML = "";
+
   const snapshot = await getDocs(collection(db, "companies"));
 
+  if (snapshot.empty) {
+    companyList.innerHTML = `<div class="loa-card"><strong>No companies yet</strong><p>No company records have been created yet.</p></div>`;
+    return;
+  }
+
   snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    const card = document.createElement("div");
-    card.className = "loa-card";
-    card.innerHTML = `
-      <strong>${data.companyName}</strong>
-      <p>${data.companyId}</p>
-      <span>${data.companyType}</span>
-    `;
-    companyList.appendChild(card);
+    companyList.appendChild(buildCompanyCard(docSnap.data()));
   });
 }
 
