@@ -1,3 +1,4 @@
+```javascript
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDocs, getDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
@@ -14,18 +15,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+
+const secondaryApp = initializeApp(firebaseConfig, "SecondaryAdmin");
 const secondaryAuth = getAuth(secondaryApp);
 
 const form = document.getElementById("createUserForm");
 const userList = document.getElementById("userList");
 const statusBanner = document.getElementById("statusBanner");
 const createUserButton = document.getElementById("createUserButton");
+const accountTypeSelect = document.getElementById("accountType");
+const roleSelect = document.getElementById("role");
 
 let currentAdminData = null;
 
-function showStatus(msg) {
-  statusBanner.innerHTML = msg;
+const ROLE_SETS = {
+  aegis: [
+    { value: "owner", label: "Owner" },
+    { value: "account_manager", label: "Account Manager" },
+    { value: "community_manager", label: "Community Manager" },
+    { value: "staff", label: "Staff" }
+  ],
+  customer: [
+    { value: "company_owner", label: "Company Owner" },
+    { value: "loa_manager", label: "LOA Manager" },
+    { value: "staff", label: "Staff" }
+  ]
+};
+
+function showStatus(message) {
+  statusBanner.innerHTML = message;
   statusBanner.classList.remove("hidden");
 }
 
@@ -34,19 +52,33 @@ function clearStatus() {
   statusBanner.classList.add("hidden");
 }
 
-function getDefaultTempPassword() {
-  return "AegisTemp!2026";
-}
-
 function normalizeRole(role) {
   return String(role || "").trim().toLowerCase();
+}
+
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function getDefaultTempPassword() {
+  return "AEGIS_TEMP";
+}
+
+function generateHiddenEmail(discordUsername, companyId) {
+  const safeUser = slugify(discordUsername) || "user";
+  const safeCompany = slugify(companyId) || "company";
+  return `${safeUser}.${safeCompany}@aegis.local`;
 }
 
 function canAccessAdminPanel(userData) {
   const role = normalizeRole(userData?.role);
   const accountType = userData?.accountType;
 
-  if (accountType === "managing_company" && ["owner", "account_manager"].includes(role)) {
+  if (accountType === "managing_company" && ["owner", "account_manager", "community_manager"].includes(role)) {
     return true;
   }
 
@@ -67,7 +99,11 @@ function canCreateRequestedRole(adminData, requestedAccountType, requestedRole) 
   }
 
   if (adminAccountType === "managing_company" && adminRole === "account_manager") {
-    return requestedAccountType === "customer" && ["company_owner", "loa_manager", "staff"].includes(normalizedRequestedRole);
+    return true;
+  }
+
+  if (adminAccountType === "managing_company" && adminRole === "community_manager") {
+    return requestedAccountType === "managing_company" && ["community_manager", "staff"].includes(normalizedRequestedRole);
   }
 
   if (adminAccountType === "customer" && adminRole === "company_owner") {
@@ -75,6 +111,34 @@ function canCreateRequestedRole(adminData, requestedAccountType, requestedRole) 
   }
 
   return false;
+}
+
+function rebuildRoleOptions() {
+  const selectedAccountType = accountTypeSelect.value;
+  const adminRole = normalizeRole(currentAdminData?.role);
+  const adminAccountType = currentAdminData?.accountType;
+
+  let options = [];
+
+  if (adminAccountType === "managing_company" && adminRole === "owner") {
+    options = selectedAccountType === "managing_company" ? ROLE_SETS.aegis : ROLE_SETS.customer;
+  } else if (adminAccountType === "managing_company" && adminRole === "account_manager") {
+    options = selectedAccountType === "managing_company" ? ROLE_SETS.aegis : ROLE_SETS.customer;
+  } else if (adminAccountType === "managing_company" && adminRole === "community_manager") {
+    accountTypeSelect.value = "managing_company";
+    options = ROLE_SETS.aegis.filter(role => ["community_manager", "staff"].includes(role.value));
+  } else if (adminAccountType === "customer" && adminRole === "company_owner") {
+    accountTypeSelect.value = "customer";
+    options = ROLE_SETS.customer.filter(role => ["loa_manager", "staff"].includes(role.value));
+  }
+
+  roleSelect.innerHTML = `<option value="">Select a role</option>`;
+  options.forEach((role) => {
+    const option = document.createElement("option");
+    option.value = role.value;
+    option.textContent = role.label;
+    roleSelect.appendChild(option);
+  });
 }
 
 function buildUserCard(docId, data) {
@@ -87,7 +151,7 @@ function buildUserCard(docId, data) {
   wrapper.innerHTML = `
     <strong>${data.discordUsername}</strong>
     <p>${data.role} • ${data.accountType}</p>
-    <span>${data.companyId}</span>
+    <span>${data.companyName || data.companyId}</span>
     <span>Status: ${isActive ? "active" : "inactive"}</span>
     <div class="button-grid">
       <button class="secondary-btn" data-action="toggle-active" data-id="${docId}" data-active="${isActive}">${toggleLabel}</button>
@@ -103,25 +167,33 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  const userDoc = await getDoc(doc(db, "users", user.uid));
-  if (!userDoc.exists()) {
-    window.location.href = "dashboard.html";
-    return;
-  }
-
-  currentAdminData = userDoc.data();
-
-  if (!canAccessAdminPanel(currentAdminData)) {
-    showStatus("You do not have permission to access the admin panel.");
-    form.classList.add("hidden");
-    setTimeout(() => {
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists()) {
       window.location.href = "dashboard.html";
-    }, 1200);
-    return;
-  }
+      return;
+    }
 
-  loadUsers();
+    currentAdminData = userDoc.data();
+
+    if (!canAccessAdminPanel(currentAdminData)) {
+      showStatus("You do not have permission to access the accounts page.");
+      form.classList.add("hidden");
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 1200);
+      return;
+    }
+
+    rebuildRoleOptions();
+    await loadUsers();
+  } catch (error) {
+    console.error(error);
+    showStatus("Failed to load account administration data.");
+  }
 });
+
+accountTypeSelect.addEventListener("change", rebuildRoleOptions);
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -132,12 +204,20 @@ form.addEventListener("submit", async (e) => {
   createUserButton.textContent = "Creating User...";
 
   const discordUsername = document.getElementById("discordUsername").value.trim();
-  const loginKey = discordUsername.toLowerCase();
-  const authEmail = document.getElementById("authEmail").value.trim().toLowerCase();
+  const loginKey = slugify(discordUsername);
   const accountType = document.getElementById("accountType").value;
   const role = document.getElementById("role").value;
-  const companyId = document.getElementById("companyId").value.trim();
+  const companyId = slugify(document.getElementById("companyId").value);
   const companyName = document.getElementById("companyName").value.trim();
+  const authEmail = generateHiddenEmail(discordUsername, companyId);
+  const tempPassword = getDefaultTempPassword();
+
+  if (!discordUsername || !role || !companyId || !companyName) {
+    showStatus("All account fields are required.");
+    createUserButton.disabled = false;
+    createUserButton.textContent = createUserButton.dataset.originalText;
+    return;
+  }
 
   if (!canCreateRequestedRole(currentAdminData, accountType, role)) {
     showStatus("You do not have permission to create that type of user.");
@@ -145,8 +225,6 @@ form.addEventListener("submit", async (e) => {
     createUserButton.textContent = createUserButton.dataset.originalText;
     return;
   }
-
-  const tempPassword = getDefaultTempPassword();
 
   try {
     const cred = await createUserWithEmailAndPassword(secondaryAuth, authEmail, tempPassword);
@@ -170,16 +248,18 @@ form.addEventListener("submit", async (e) => {
 
     showStatus(`
       <strong>User created successfully.</strong><br>
+      Hidden email: <strong>${authEmail}</strong><br>
       Temporary password: <strong>${tempPassword}</strong><br>
-      Tell the user to sign in once and immediately change it.
+      Tell the user to sign in once and change it immediately.
     `);
 
     form.reset();
+    rebuildRoleOptions();
     await signOut(secondaryAuth);
     await loadUsers();
-  } catch (err) {
-    console.error(err);
-    showStatus("User creation failed. Verify the email is unique and the account details are valid.");
+  } catch (error) {
+    console.error(error);
+    showStatus("User creation failed. The generated email may already exist, or the account details are invalid.");
   } finally {
     createUserButton.disabled = false;
     createUserButton.textContent = createUserButton.dataset.originalText;
@@ -218,8 +298,8 @@ function attachUserCardHandlers() {
 
         showStatus(`Account ${isCurrentlyActive ? "disabled" : "enabled"} successfully.`);
         await loadUsers();
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
         showStatus("Failed to update account status.");
       }
     });
@@ -230,3 +310,4 @@ document.getElementById("logoutButton").addEventListener("click", async () => {
   await signOut(auth);
   window.location.href = "index.html";
 });
+```
