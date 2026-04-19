@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDocs, getDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDocs, getDoc, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmBLwVBVhY29tnMMHH-kVHo77OILX7PTM",
@@ -14,7 +14,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
 const secondaryApp = initializeApp(firebaseConfig, "SecondaryAdmin");
 const secondaryAuth = getAuth(secondaryApp);
 
@@ -24,8 +23,10 @@ const statusBanner = document.getElementById("statusBanner");
 const createUserButton = document.getElementById("createUserButton");
 const accountTypeSelect = document.getElementById("accountType");
 const roleSelect = document.getElementById("role");
+const userSearchInput = document.getElementById("userSearchInput");
 
 let currentAdminData = null;
+let users = [];
 
 const ROLE_SETS = {
   aegis: [
@@ -112,6 +113,35 @@ function canCreateRequestedRole(adminData, requestedAccountType, requestedRole) 
   return false;
 }
 
+function canDeleteUser(targetUser) {
+  const adminRole = normalizeRole(currentAdminData?.role);
+
+  if (currentAdminData?.accountType === "managing_company" && ["owner", "account_manager"].includes(adminRole)) {
+    if (targetUser.role === "owner" && adminRole !== "owner") return false;
+    return true;
+  }
+
+  if (currentAdminData?.accountType === "customer" && adminRole === "company_owner") {
+    return targetUser.accountType === "customer" && targetUser.companyId === currentAdminData.companyId;
+  }
+
+  return false;
+}
+
+function canResetPassword(targetUser) {
+  const adminRole = normalizeRole(currentAdminData?.role);
+
+  if (currentAdminData?.accountType === "managing_company" && ["owner", "account_manager"].includes(adminRole)) {
+    return true;
+  }
+
+  if (currentAdminData?.accountType === "customer" && currentAdminData?.role === "company_owner") {
+    return targetUser.accountType === "customer" && targetUser.companyId === currentAdminData.companyId;
+  }
+
+  return false;
+}
+
 function rebuildRoleOptions() {
   const selectedAccountType = accountTypeSelect.value;
   const adminRole = normalizeRole(currentAdminData?.role);
@@ -119,9 +149,7 @@ function rebuildRoleOptions() {
 
   let options = [];
 
-  if (adminAccountType === "managing_company" && adminRole === "owner") {
-    options = selectedAccountType === "managing_company" ? ROLE_SETS.aegis : ROLE_SETS.customer;
-  } else if (adminAccountType === "managing_company" && adminRole === "account_manager") {
+  if (adminAccountType === "managing_company" && ["owner", "account_manager"].includes(adminRole)) {
     options = selectedAccountType === "managing_company" ? ROLE_SETS.aegis : ROLE_SETS.customer;
   } else if (adminAccountType === "managing_company" && adminRole === "community_manager") {
     accountTypeSelect.value = "managing_company";
@@ -152,12 +180,105 @@ function buildUserCard(docId, data) {
     <p>${data.role} • ${data.accountType}</p>
     <span>${data.companyName || data.companyId}</span>
     <span>Status: ${isActive ? "active" : "inactive"}</span>
-    <div class="button-grid">
-      <button class="secondary-btn" data-action="toggle-active" data-id="${docId}" data-active="${isActive}">${toggleLabel}</button>
-    </div>
   `;
 
+  const actions = document.createElement("div");
+  actions.className = "button-grid";
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.className = "secondary-btn";
+  toggleBtn.type = "button";
+  toggleBtn.textContent = toggleLabel;
+  toggleBtn.addEventListener("click", async () => {
+    try {
+      await updateDoc(doc(db, "users", docId), {
+        active: !isActive,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth.currentUser.uid
+      });
+      showStatus(`Account ${isActive ? "disabled" : "enabled"} successfully.`);
+      await loadUsers();
+    } catch (error) {
+      console.error(error);
+      showStatus("Failed to update account status.");
+    }
+  });
+  actions.appendChild(toggleBtn);
+
+  if (canResetPassword(data)) {
+    const resetBtn = document.createElement("button");
+    resetBtn.className = "secondary-btn";
+    resetBtn.type = "button";
+    resetBtn.textContent = "Reset Password";
+    resetBtn.addEventListener("click", async () => {
+      try {
+        await updateDoc(doc(db, "users", docId), {
+          mustChangePassword: true,
+          tempPasswordIssued: true,
+          updatedAt: serverTimestamp(),
+          updatedBy: auth.currentUser.uid
+        });
+        showStatus(`Password reset flag applied. Temporary password should be ${getDefaultTempPassword()}.`);
+      } catch (error) {
+        console.error(error);
+        showStatus("Failed to reset password flag.");
+      }
+    });
+    actions.appendChild(resetBtn);
+  }
+
+  if (canDeleteUser(data)) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "secondary-btn";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Delete Account";
+    deleteBtn.addEventListener("click", async () => {
+      const confirmation = prompt(`Type DELETE to remove ${data.discordUsername}.`);
+      if (confirmation !== "DELETE") {
+        showStatus("Account deletion cancelled.");
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "users", docId));
+        showStatus("Account deleted successfully.");
+        await loadUsers();
+      } catch (error) {
+        console.error(error);
+        showStatus("Failed to delete account.");
+      }
+    });
+    actions.appendChild(deleteBtn);
+  }
+
+  wrapper.appendChild(actions);
   return wrapper;
+}
+
+function renderUsers(filter = "") {
+  userList.innerHTML = "";
+  const normalized = filter.trim().toLowerCase();
+
+  const filtered = users.filter((user) => {
+    const haystack = [
+      user.discordUsername,
+      user.role,
+      user.accountType,
+      user.companyId,
+      user.companyName || ""
+    ].join(" ").toLowerCase();
+
+    return haystack.includes(normalized);
+  });
+
+  if (!filtered.length) {
+    userList.innerHTML = `<div class="loa-card"><strong>No matching users</strong><p>No users matched your search.</p></div>`;
+    return;
+  }
+
+  filtered.forEach((user) => {
+    userList.appendChild(buildUserCard(user.docId, user));
+  });
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -193,6 +314,10 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 accountTypeSelect.addEventListener("change", rebuildRoleOptions);
+
+userSearchInput.addEventListener("input", (e) => {
+  renderUsers(e.target.value);
+});
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -266,9 +391,9 @@ form.addEventListener("submit", async (e) => {
 });
 
 async function loadUsers() {
-  userList.innerHTML = "";
-
+  users = [];
   const snapshot = await getDocs(collection(db, "users"));
+
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
 
@@ -276,33 +401,10 @@ async function loadUsers() {
       return;
     }
 
-    userList.appendChild(buildUserCard(docSnap.id, data));
+    users.push({ ...data, docId: docSnap.id });
   });
 
-  attachUserCardHandlers();
-}
-
-function attachUserCardHandlers() {
-  document.querySelectorAll('[data-action="toggle-active"]').forEach((button) => {
-    button.addEventListener("click", async () => {
-      const userId = button.dataset.id;
-      const isCurrentlyActive = button.dataset.active === "true";
-
-      try {
-        await updateDoc(doc(db, "users", userId), {
-          active: !isCurrentlyActive,
-          updatedAt: serverTimestamp(),
-          updatedBy: auth.currentUser.uid
-        });
-
-        showStatus(`Account ${isCurrentlyActive ? "disabled" : "enabled"} successfully.`);
-        await loadUsers();
-      } catch (error) {
-        console.error(error);
-        showStatus("Failed to update account status.");
-      }
-    });
-  });
+  renderUsers(userSearchInput.value || "");
 }
 
 document.getElementById("logoutButton").addEventListener("click", async () => {
