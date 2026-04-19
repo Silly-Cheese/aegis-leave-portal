@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Aegis Leave Portal | LOA Center</title>
-  <meta name="description" content="Aegis Leave Portal LOA request and approval center." />
+  <meta name="description" content="Aegis Leave Portal leave of absence center." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,6 +25,9 @@
         <nav class="sidebar-nav">
           <a class="nav-link" href="dashboard.html">Dashboard</a>
           <a class="nav-link active" href="loa.html">LOA Center</a>
+          <a class="nav-link" href="admin.html">Accounts</a>
+          <a class="nav-link" href="companies.html">Companies</a>
+          <a class="nav-link" href="audit.html">Audit Logs</a>
         </nav>
       </div>
 
@@ -34,9 +37,9 @@
     <main class="dashboard-main">
       <header class="dashboard-header">
         <div>
-          <p class="eyebrow">Leave of Absence</p>
-          <h2>Requests and approvals</h2>
-          <p id="loaIntroMeta" class="muted">Submit LOA requests and review eligible approvals.</p>
+          <p class="eyebrow">Leave Management</p>
+          <h2>Requests, approvals, and early endings</h2>
+          <p id="loaIntroMeta" class="muted">Submit leave requests and manage them according to your authority level.</p>
         </div>
       </header>
 
@@ -67,14 +70,16 @@
               <textarea id="reason" rows="5" placeholder="Enter the reason for your leave request" required></textarea>
             </label>
 
-            <button id="submitLoaButton" class="primary-btn" type="submit">Submit LOA</button>
+            <div class="form-actions">
+              <button id="submitLoaButton" class="primary-btn" type="submit">Submit LOA</button>
+            </div>
           </form>
         </article>
 
         <article class="panel-card">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">History</p>
+              <p class="eyebrow">My Leave Records</p>
               <h3>Your LOAs</h3>
             </div>
           </div>
@@ -84,11 +89,21 @@
         <article id="approvalsPanel" class="panel-card hidden">
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">Approvals</p>
-              <h3>Requests awaiting your review</h3>
+              <p class="eyebrow">Pending Approvals</p>
+              <h3>Requests awaiting review</h3>
             </div>
           </div>
           <div id="approvalList" class="card-list"></div>
+        </article>
+
+        <article id="activeManagementPanel" class="panel-card hidden">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Active Leave Management</p>
+              <h3>Approved LOAs that can be ended early</h3>
+            </div>
+          </div>
+          <div id="activeLoaList" class="card-list"></div>
         </article>
       </section>
     </main>
