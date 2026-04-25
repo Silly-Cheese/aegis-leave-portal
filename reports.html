@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aegis Leave Portal | Reports</title>
+  <meta name="description" content="Aegis Leave Portal reporting center." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">
+          <div class="logo-mark">A</div>
+          <div>
+            <p class="eyebrow">Aegis Leave Portal</p>
+            <h1>Reports</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="loa.html">LOA Center</a>
+          <a class="nav-link" href="admin.html">Accounts</a>
+          <a class="nav-link" href="companies.html">Companies</a>
+          <a class="nav-link" href="roles.html">Role Builder</a>
+          <a class="nav-link active" href="reports.html">Reports</a>
+          <a class="nav-link" href="audit.html">Audit Logs</a>
+        </nav>
+      </div>
+
+      <button id="logoutButton" class="secondary-btn full-width" type="button">Sign Out</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Reporting Center</p>
+          <h2>Company, staff, and LOA reports</h2>
+          <p class="muted">Filter leave data, review company activity, and export records for documentation.</p>
+        </div>
+      </header>
+
+      <div id="statusBanner" class="status-banner hidden"></div>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span>Total Companies</span>
+          <strong id="statCompanies">0</strong>
+          <p class="muted">Companies visible to your account.</p>
+        </article>
+        <article class="stat-card">
+          <span>Total Users</span>
+          <strong id="statUsers">0</strong>
+          <p class="muted">User records in scope.</p>
+        </article>
+        <article class="stat-card">
+          <span>Total LOAs</span>
+          <strong id="statLoas">0</strong>
+          <p class="muted">Leave records in scope.</p>
+        </article>
+        <article class="stat-card">
+          <span>Active LOAs</span>
+          <strong id="statActiveLoas">0</strong>
+          <p class="muted">Approved LOAs active today.</p>
+        </article>
+      </section>
+
+      <section class="content-grid single-column-grid">
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Filters</p>
+              <h3>Report controls</h3>
+            </div>
+          </div>
+
+          <div class="form-grid two-column-form">
+            <label>
+              <span>Company</span>
+              <select id="companyFilter">
+                <option value="all">All companies</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Status</span>
+              <select id="statusFilter">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+                <option value="ended_early">Ended Early</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Start Date From</span>
+              <input id="startDateFilter" type="date" />
+            </label>
+
+            <label>
+              <span>End Date Through</span>
+              <input id="endDateFilter" type="date" />
+            </label>
+
+            <label class="full-span">
+              <span>Search</span>
+              <input id="searchFilter" type="text" placeholder="Search by user, role, company, reason, or status" />
+            </label>
+          </div>
+
+          <div class="button-grid" style="margin-top: 16px;">
+            <button id="exportLoasButton" class="primary-btn" type="button">Export LOAs CSV</button>
+            <button id="exportUsersButton" class="secondary-btn" type="button">Export Users CSV</button>
+            <button id="clearFiltersButton" class="ghost-btn" type="button">Clear Filters</button>
+          </div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">LOA Report</p>
+              <h3>Filtered leave records</h3>
+            </div>
+          </div>
+          <div id="loaReportList" class="card-list"></div>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Staff Report</p>
+              <h3>Filtered user records</h3>
+            </div>
+          </div>
+          <div id="userReportList" class="card-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/reports.js"></script>
+</body>
+</html>
