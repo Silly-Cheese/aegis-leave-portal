@@ -26,8 +26,11 @@ const companyStaffList = document.getElementById("companyStaffList");
 const companyLoaList = document.getElementById("companyLoaList");
 const staffSearchInput = document.getElementById("staffSearchInput");
 const loaSearchInput = document.getElementById("loaSearchInput");
+const loaStatusFilter = document.getElementById("loaStatusFilter");
 const manualLoaPanel = document.getElementById("manualLoaPanel");
 const manualLoaForm = document.getElementById("manualLoaForm");
+const manualRequesterSelect = document.getElementById("manualRequesterSelect");
+const companySummaryList = document.getElementById("companySummaryList");
 
 let users = [];
 let loas = [];
@@ -96,29 +99,90 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
-function updateStats() {
+function getStats() {
   const today = new Date().toISOString().split("T")[0];
-  const pending = loas.filter(l => l.status === "pending").length;
-  const approvedActive = loas.filter(l => l.status === "approved" && l.startDate <= today && l.endDate >= today).length;
+  return {
+    totalStaff: users.length,
+    activeStaff: users.filter(u => u.active !== false).length,
+    inactiveStaff: users.filter(u => u.active === false).length,
+    totalLoas: loas.length,
+    pending: loas.filter(l => l.status === "pending").length,
+    approvedTotal: loas.filter(l => l.status === "approved").length,
+    denied: loas.filter(l => l.status === "denied").length,
+    endedEarly: loas.filter(l => l.status === "ended_early").length,
+    approvedActive: loas.filter(l => l.status === "approved" && l.startDate <= today && l.endDate >= today).length,
+    staffWithLoas: new Set(loas.map(l => l.requesterUid).filter(Boolean)).size
+  };
+}
 
-  setText("companyStaffCount", String(users.length));
-  setText("companyLoaCount", String(loas.length));
-  setText("companyPendingCount", String(pending));
-  setText("companyApprovedCount", String(approvedActive));
+function updateStats() {
+  const stats = getStats();
+  setText("companyStaffCount", String(stats.totalStaff));
+  setText("companyActiveStaffCount", String(stats.activeStaff));
+  setText("companyLoaCount", String(stats.totalLoas));
+  setText("companyPendingCount", String(stats.pending));
+  setText("companyApprovedCount", String(stats.approvedActive));
+  setText("companyApprovedTotalCount", String(stats.approvedTotal));
+  setText("companyDeniedCount", String(stats.denied));
+  setText("companyEndedEarlyCount", String(stats.endedEarly));
+  renderSummary(stats);
+}
+
+function renderSummary(stats) {
+  if (!companySummaryList) return;
+  companySummaryList.innerHTML = `
+    <div class="loa-card">
+      <strong>${companyData?.companyName || companyId}</strong>
+      <p>${humanize(companyData?.companyType)} • ${companyId}</p>
+      <span>Active Staff: ${stats.activeStaff}</span>
+      <span>Inactive Staff: ${stats.inactiveStaff}</span>
+      <span>Staff With LOA History: ${stats.staffWithLoas}</span>
+      <span>Pending / Approved / Denied / Ended Early: ${stats.pending} / ${stats.approvedTotal} / ${stats.denied} / ${stats.endedEarly}</span>
+    </div>
+  `;
+}
+
+function populateManualRequesterSelect() {
+  if (!manualRequesterSelect) return;
+  manualRequesterSelect.innerHTML = `<option value="">Select a company user</option>`;
+  users
+    .filter(user => user.active !== false)
+    .sort((a, b) => String(a.discordUsername || "").localeCompare(String(b.discordUsername || "")))
+    .forEach(user => {
+      const option = document.createElement("option");
+      option.value = user.docId;
+      option.textContent = `${user.discordUsername || "Unnamed User"} — ${humanize(user.role)}`;
+      option.dataset.role = user.role || "staff";
+      option.dataset.name = user.discordUsername || "Unnamed User";
+      manualRequesterSelect.appendChild(option);
+    });
 }
 
 function buildUserCard(user) {
   const div = document.createElement("div");
   div.className = "loa-card";
+  const userLoas = loas.filter(loa => loa.requesterUid === user.docId);
+
   div.innerHTML = `
     <strong>${user.discordUsername || "Unnamed User"}</strong>
     <p>${humanize(user.role)} • ${humanize(user.accountType)}</p>
     <span>Status: ${user.active === false ? "Inactive" : "Active"}</span>
+    <span>LOA Records: ${userLoas.length}</span>
   `;
-  div.style.cursor = "pointer";
-  div.addEventListener("click", () => {
+
+  const actions = document.createElement("div");
+  actions.className = "button-grid";
+
+  const profileBtn = document.createElement("button");
+  profileBtn.className = "primary-btn";
+  profileBtn.type = "button";
+  profileBtn.textContent = "View Profile";
+  profileBtn.addEventListener("click", () => {
     window.location.href = `user-view.html?uid=${encodeURIComponent(user.docId)}`;
   });
+  actions.appendChild(profileBtn);
+
+  div.appendChild(actions);
   return div;
 }
 
@@ -130,6 +194,7 @@ function buildLoaCard(loa) {
     <p>${loa.reason || "No reason provided."}</p>
     <span>Requester: ${loa.requesterName || loa.requesterUid || "Unknown"}</span>
     <span>Status: ${humanize(loa.status)}</span>
+    <span>Manual: ${loa.manuallyCreated ? "Yes" : "No"}</span>
   `;
 
   const actions = document.createElement("div");
@@ -198,7 +263,7 @@ function buildLoaCard(loa) {
 function renderUsers(filter = "") {
   companyStaffList.innerHTML = "";
   const normalized = filter.trim().toLowerCase();
-  const filtered = users.filter(u => [u.discordUsername, u.role, u.accountType].join(" ").toLowerCase().includes(normalized));
+  const filtered = users.filter(u => [u.discordUsername, u.role, u.accountType, u.active === false ? "inactive" : "active"].join(" ").toLowerCase().includes(normalized));
 
   if (!filtered.length) {
     companyStaffList.innerHTML = `<div class="loa-card"><strong>No matching users</strong><p>No users matched your search.</p></div>`;
@@ -210,10 +275,16 @@ function renderUsers(filter = "") {
 function renderLoas(filter = "") {
   companyLoaList.innerHTML = "";
   const normalized = filter.trim().toLowerCase();
-  const filtered = loas.filter(l => [l.reason, l.status, l.requesterName, l.requesterRole].join(" ").toLowerCase().includes(normalized));
+  const statusFilter = loaStatusFilter?.value || "all";
+
+  const filtered = loas.filter(l => {
+    const matchesText = [l.reason, l.status, l.requesterName, l.requesterRole].join(" ").toLowerCase().includes(normalized);
+    const matchesStatus = statusFilter === "all" || l.status === statusFilter;
+    return matchesText && matchesStatus;
+  });
 
   if (!filtered.length) {
-    companyLoaList.innerHTML = `<div class="loa-card"><strong>No matching LOAs</strong><p>No leave records matched your search.</p></div>`;
+    companyLoaList.innerHTML = `<div class="loa-card"><strong>No matching LOAs</strong><p>No leave records matched your search or filter.</p></div>`;
     return;
   }
   filtered.forEach(l => companyLoaList.appendChild(buildLoaCard(l)));
@@ -236,6 +307,7 @@ async function loadCompanyData() {
   });
 
   updateStats();
+  populateManualRequesterSelect();
   renderUsers(staffSearchInput.value || "");
   renderLoas(loaSearchInput.value || "");
 }
@@ -279,13 +351,23 @@ onAuthStateChanged(auth, async (user) => {
 
 staffSearchInput.addEventListener("input", (e) => renderUsers(e.target.value));
 loaSearchInput.addEventListener("input", (e) => renderLoas(e.target.value));
+if (loaStatusFilter) loaStatusFilter.addEventListener("change", () => renderLoas(loaSearchInput.value || ""));
 
 manualLoaForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   clearStatus();
 
+  const selectedOption = manualRequesterSelect?.selectedOptions?.[0];
+  const requesterUid = manualRequesterSelect?.value;
+  const requesterRole = selectedOption?.dataset?.role || "staff";
+  const requesterName = selectedOption?.dataset?.name || "Unknown User";
   const startDate = document.getElementById("manualStartDate").value;
   const endDate = document.getElementById("manualEndDate").value;
+
+  if (!requesterUid) {
+    showStatus("Select a requester before creating a manual LOA.");
+    return;
+  }
 
   if (endDate < startDate) {
     showStatus("The end date cannot be before the start date.");
@@ -294,9 +376,9 @@ manualLoaForm.addEventListener("submit", async (e) => {
 
   try {
     const payload = {
-      requesterUid: document.getElementById("manualRequesterUid").value.trim(),
-      requesterRole: normalizeRole(document.getElementById("manualRequesterRole").value),
-      requesterName: document.getElementById("manualRequesterName").value.trim(),
+      requesterUid,
+      requesterRole: normalizeRole(requesterRole),
+      requesterName,
       companyId,
       companyName: companyData?.companyName || companyId,
       accountType: companyData?.companyType || "customer",
