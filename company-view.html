@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aegis Leave Portal | Company View</title>
-  <meta name="description" content="Aegis Leave Portal company detail view." />
+  <title>Aegis Leave Portal | Company Records</title>
+  <meta name="description" content="Aegis Leave Portal company records dashboard." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
           <div class="logo-mark">A</div>
           <div>
             <p class="eyebrow">Aegis Leave Portal</p>
-            <h1>Company View</h1>
+            <h1>Company Records</h1>
           </div>
         </div>
 
@@ -27,6 +27,7 @@
           <a class="nav-link" href="loa.html">LOA Center</a>
           <a class="nav-link" href="admin.html">Accounts</a>
           <a class="nav-link active" href="companies.html">Companies</a>
+          <a class="nav-link" href="roles.html">Role Builder</a>
           <a class="nav-link" href="audit.html">Audit Logs</a>
         </nav>
       </div>
@@ -37,9 +38,9 @@
     <main class="dashboard-main">
       <header class="dashboard-header">
         <div>
-          <p class="eyebrow">Company Records</p>
+          <p class="eyebrow">Company Records Dashboard</p>
           <h2 id="companyTitle">Loading company...</h2>
-          <p id="companySubtitle" class="muted">Review staff, leave records, and company-level operations.</p>
+          <p id="companySubtitle" class="muted">Review staff, leave records, company activity, and leave trends.</p>
         </div>
       </header>
 
@@ -52,23 +53,56 @@
           <p class="muted">All users assigned to this company.</p>
         </article>
         <article class="stat-card">
+          <span>Active Staff</span>
+          <strong id="companyActiveStaffCount">0</strong>
+          <p class="muted">Users currently enabled.</p>
+        </article>
+        <article class="stat-card">
           <span>Total LOAs</span>
           <strong id="companyLoaCount">0</strong>
           <p class="muted">All leave requests tied to this company.</p>
         </article>
         <article class="stat-card">
-          <span>Pending LOAs</span>
+          <span>Active LOAs</span>
+          <strong id="companyApprovedCount">0</strong>
+          <p class="muted">Approved LOAs active today.</p>
+        </article>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span>Pending</span>
           <strong id="companyPendingCount">0</strong>
-          <p class="muted">Requests currently awaiting review.</p>
+          <p class="muted">Awaiting review.</p>
         </article>
         <article class="stat-card">
-          <span>Approved Active</span>
-          <strong id="companyApprovedCount">0</strong>
-          <p class="muted">Approved LOAs still active right now.</p>
+          <span>Approved Total</span>
+          <strong id="companyApprovedTotalCount">0</strong>
+          <p class="muted">Approved leave records.</p>
+        </article>
+        <article class="stat-card">
+          <span>Denied</span>
+          <strong id="companyDeniedCount">0</strong>
+          <p class="muted">Denied requests.</p>
+        </article>
+        <article class="stat-card">
+          <span>Ended Early</span>
+          <strong id="companyEndedEarlyCount">0</strong>
+          <p class="muted">LOAs closed before original end date.</p>
         </article>
       </section>
 
       <section class="content-grid single-column-grid">
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Company Summary</p>
+              <h3>Quick record snapshot</h3>
+            </div>
+          </div>
+          <div id="companySummaryList" class="card-list"></div>
+        </article>
+
         <article id="manualLoaPanel" class="panel-card hidden">
           <div class="panel-heading">
             <div>
@@ -79,18 +113,10 @@
 
           <form id="manualLoaForm" class="form-grid two-column-form">
             <label>
-              <span>Requester UID</span>
-              <input id="manualRequesterUid" type="text" placeholder="Paste the user UID" required />
-            </label>
-
-            <label>
-              <span>Requester Role</span>
-              <input id="manualRequesterRole" type="text" placeholder="staff / loa_manager / etc." required />
-            </label>
-
-            <label>
-              <span>Requester Name</span>
-              <input id="manualRequesterName" type="text" placeholder="Display name" required />
+              <span>Requester</span>
+              <select id="manualRequesterSelect" required>
+                <option value="">Select a company user</option>
+              </select>
             </label>
 
             <label>
@@ -125,7 +151,7 @@
           <div class="form-grid" style="margin-bottom: 16px;">
             <label>
               <span>Search Staff</span>
-              <input id="staffSearchInput" type="text" placeholder="Search by username or role" />
+              <input id="staffSearchInput" type="text" placeholder="Search by username, role, or status" />
             </label>
           </div>
 
@@ -140,10 +166,20 @@
             </div>
           </div>
 
-          <div class="form-grid" style="margin-bottom: 16px;">
+          <div class="form-grid two-column-form" style="margin-bottom: 16px;">
             <label>
               <span>Search LOAs</span>
               <input id="loaSearchInput" type="text" placeholder="Search by requester, reason, or status" />
+            </label>
+            <label>
+              <span>Status Filter</span>
+              <select id="loaStatusFilter">
+                <option value="all">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+                <option value="ended_early">Ended Early</option>
+              </select>
             </label>
           </div>
 
