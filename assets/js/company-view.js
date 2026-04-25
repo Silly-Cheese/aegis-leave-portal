@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getUserWithPermissions } from "./permissions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmBLwVBVhY29tnMMHH-kVHo77OILX7PTM",
@@ -55,41 +56,22 @@ function humanize(value) {
 }
 
 function canManualCreate() {
-  if (!currentUserData) return false;
-  if (currentUserData.accountType === "managing_company") {
-    return ["owner", "account_manager"].includes(normalizeRole(currentUserData.role));
-  }
-  if (currentUserData.accountType === "customer") {
-    return currentUserData.companyId === companyId && ["company_owner", "loa_manager"].includes(normalizeRole(currentUserData.role));
-  }
-  return false;
+  if (!currentUserData?.permissions?.canCreateLoasForOthers) return false;
+  if (currentUserData.accountType === "managing_company") return true;
+  return currentUserData.companyId === companyId;
 }
 
 function canDeleteLoa(loa) {
-  if (!currentUserData) return false;
-  const role = normalizeRole(currentUserData.role);
-  if (currentUserData.accountType === "managing_company") {
-    return ["owner", "account_manager"].includes(role);
-  }
-  if (currentUserData.accountType === "customer") {
-    return currentUserData.companyId === loa.companyId && role === "company_owner";
-  }
-  return false;
+  if (!currentUserData?.permissions?.canDeleteLoas) return false;
+  if (currentUserData.accountType === "managing_company") return true;
+  return currentUserData.companyId === loa.companyId;
 }
 
 function canEndLoaEarly(loa) {
-  if (!currentUserData) return false;
-  const role = normalizeRole(currentUserData.role);
+  if (!currentUserData?.permissions?.canEndLoasEarly) return false;
   if (loa.status !== "approved") return false;
-  if (currentUserData.accountType === "managing_company") {
-    return ["owner", "account_manager"].includes(role);
-  }
-  if (currentUserData.accountType === "customer") {
-    if (currentUserData.companyId !== loa.companyId) return false;
-    if (role === "company_owner") return ["loa_manager", "staff"].includes(normalizeRole(loa.requesterRole));
-    if (role === "loa_manager") return normalizeRole(loa.requesterRole) === "staff";
-  }
-  return false;
+  if (currentUserData.accountType === "managing_company") return true;
+  return currentUserData.companyId === loa.companyId;
 }
 
 async function logAudit(action, targetType, targetId, details = {}) {
@@ -133,6 +115,10 @@ function buildUserCard(user) {
     <p>${humanize(user.role)} • ${humanize(user.accountType)}</p>
     <span>Status: ${user.active === false ? "Inactive" : "Active"}</span>
   `;
+  div.style.cursor = "pointer";
+  div.addEventListener("click", () => {
+    window.location.href = `user-view.html?uid=${encodeURIComponent(user.docId)}`;
+  });
   return div;
 }
 
@@ -268,12 +254,11 @@ onAuthStateChanged(auth, async (user) => {
   clearStatus();
 
   try {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) {
+    currentUserData = await getUserWithPermissions(db, user.uid);
+    if (!currentUserData) {
       showStatus("Your user record could not be found.");
       return;
     }
-    currentUserData = userDoc.data();
 
     const companyDoc = await getDoc(doc(db, "companies", companyId));
     if (!companyDoc.exists()) {
