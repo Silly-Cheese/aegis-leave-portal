@@ -4,8 +4,18 @@ export async function getUserWithPermissions(db, uid) {
   const snap = await getDoc(doc(db, "users", uid));
   if (!snap.exists()) return null;
 
-  const user = snap.data();
-  const role = String(user.role || "").trim().toLowerCase();
+  const rawUser = snap.data();
+  const accountType = rawUser.accountType || rawUser.account_type || rawUser.type || "";
+  const role = String(rawUser.role || "").trim().toLowerCase();
+  const companyId = rawUser.companyId || rawUser.company_id || "";
+
+  const user = {
+    ...rawUser,
+    uid: rawUser.uid || uid,
+    accountType,
+    companyId,
+    role
+  };
 
   const permissions = {
     canApproveLoas: false,
@@ -19,7 +29,7 @@ export async function getUserWithPermissions(db, uid) {
     canCreateCustomRoles: false
   };
 
-  if (user.accountType === "managing_company") {
+  if (accountType === "managing_company") {
     if (["owner", "account_manager"].includes(role)) {
       Object.keys(permissions).forEach((key) => permissions[key] = true);
     }
@@ -39,7 +49,7 @@ export async function getUserWithPermissions(db, uid) {
     }
   }
 
-  if (user.accountType === "customer") {
+  if (accountType === "customer") {
     if (role === "company_owner") {
       Object.assign(permissions, {
         canApproveLoas: true,
@@ -61,17 +71,21 @@ export async function getUserWithPermissions(db, uid) {
     }
   }
 
-  const rolesSnap = await getDocs(collection(db, "customRoles"));
-  rolesSnap.forEach((roleDoc) => {
-    const roleData = roleDoc.data();
-    if (
-      roleData.roleId === user.role &&
-      roleData.companyId === user.companyId &&
-      roleData.active !== false
-    ) {
-      Object.assign(permissions, roleData.permissions || {});
-    }
-  });
+  try {
+    const rolesSnap = await getDocs(collection(db, "customRoles"));
+    rolesSnap.forEach((roleDoc) => {
+      const roleData = roleDoc.data();
+      if (
+        String(roleData.roleId || "").toLowerCase() === role &&
+        roleData.companyId === companyId &&
+        roleData.active !== false
+      ) {
+        Object.assign(permissions, roleData.permissions || {});
+      }
+    });
+  } catch (error) {
+    console.warn("Custom role permissions could not be loaded. Base permissions were applied.", error);
+  }
 
   return { ...user, permissions };
 }
