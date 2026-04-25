@@ -1,3 +1,41 @@
+function ensureReportsNavigation() {
+  const nav = document.querySelector(".sidebar-nav");
+  if (!nav) return;
+
+  const currentPage = window.location.pathname.split("/").pop() || "dashboard.html";
+  const existingReportsLink = nav.querySelector('a[href="reports.html"]');
+
+  if (existingReportsLink) {
+    if (currentPage === "reports.html") {
+      nav.querySelectorAll(".nav-link").forEach((link) => link.classList.remove("active"));
+      existingReportsLink.classList.add("active");
+    }
+    return;
+  }
+
+  const reportsLink = document.createElement("a");
+  reportsLink.className = currentPage === "reports.html" ? "nav-link active" : "nav-link";
+  reportsLink.href = "reports.html";
+  reportsLink.textContent = "Reports";
+
+  if (currentPage === "reports.html") {
+    nav.querySelectorAll(".nav-link").forEach((link) => link.classList.remove("active"));
+  }
+
+  const auditLink = nav.querySelector('a[href="audit.html"]');
+  if (auditLink) {
+    nav.insertBefore(reportsLink, auditLink);
+  } else {
+    nav.appendChild(reportsLink);
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", ensureReportsNavigation);
+} else {
+  ensureReportsNavigation();
+}
+
 export async function getUserWithPermissions(db, uid) {
   const { doc, getDoc, collection, getDocs } = await import("https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js");
 
