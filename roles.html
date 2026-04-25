@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aegis Leave Portal | Role Builder</title>
+  <meta name="description" content="Aegis Leave Portal custom role builder." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">
+          <div class="logo-mark">A</div>
+          <div>
+            <p class="eyebrow">Aegis Leave Portal</p>
+            <h1>Role Builder</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link" href="dashboard.html">Dashboard</a>
+          <a class="nav-link" href="loa.html">LOA Center</a>
+          <a class="nav-link" href="admin.html">Accounts</a>
+          <a class="nav-link" href="companies.html">Companies</a>
+          <a class="nav-link active" href="roles.html">Role Builder</a>
+          <a class="nav-link" href="audit.html">Audit Logs</a>
+        </nav>
+      </div>
+
+      <button id="logoutButton" class="secondary-btn full-width" type="button">Sign Out</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <header class="dashboard-header">
+        <div>
+          <p class="eyebrow">Custom Roles</p>
+          <h2>Create customer-company role templates</h2>
+          <p class="muted">Owners and Aegis Role Setters can create custom roles for customer companies and define what those roles are allowed to do.</p>
+        </div>
+      </header>
+
+      <div id="statusBanner" class="status-banner hidden"></div>
+
+      <section class="content-grid single-column-grid">
+        <article class="panel-card" id="roleBuilderPanel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">New Custom Role</p>
+              <h3>Role setup</h3>
+            </div>
+          </div>
+
+          <form id="roleForm" class="form-grid two-column-form">
+            <label>
+              <span>Role Name</span>
+              <input id="roleName" type="text" placeholder="Example: Shift Supervisor" required />
+            </label>
+
+            <label>
+              <span>Role ID</span>
+              <input id="roleId" type="text" placeholder="Auto-filled from role name" required />
+            </label>
+
+            <label>
+              <span>Customer Company ID</span>
+              <input id="companyId" type="text" placeholder="customer-company-id" required />
+            </label>
+
+            <label>
+              <span>Status</span>
+              <select id="roleStatus" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </label>
+
+            <div class="full-span">
+              <div class="section-divider"><span>Permissions</span></div>
+            </div>
+
+            <label>
+              <span>Approve LOAs</span>
+              <select id="canApproveLoas">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </label>
+
+            <label>
+              <span>End LOAs Early</span>
+              <select id="canEndLoasEarly">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Create LOAs for Others</span>
+              <select id="canCreateLoasForOthers">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </label>
+
+            <label>
+              <span>View Company Records</span>
+              <select id="canViewCompanyRecords">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Manage Customer Users</span>
+              <select id="canManageUsers">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Delete LOAs</span>
+              <select id="canDeleteLoas">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </label>
+
+            <label class="full-span">
+              <span>Role Notes</span>
+              <textarea id="roleNotes" rows="4" placeholder="Optional internal notes about what this role is for."></textarea>
+            </label>
+
+            <div class="form-actions full-span">
+              <button id="saveRoleButton" class="primary-btn" type="submit">Save Custom Role</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel-card">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Existing Custom Roles</p>
+              <h3>Customer role templates</h3>
+            </div>
+          </div>
+
+          <div class="form-grid" style="margin-bottom: 16px;">
+            <label>
+              <span>Search Roles</span>
+              <input id="roleSearchInput" type="text" placeholder="Search by role name, company, or permission" />
+            </label>
+          </div>
+
+          <div id="roleList" class="card-list"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/roles.js"></script>
+</body>
+</html>
