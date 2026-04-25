@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDocs, getDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, getDocs, serverTimestamp, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getUserWithPermissions } from "./permissions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmBLwVBVhY29tnMMHH-kVHo77OILX7PTM",
@@ -41,18 +42,29 @@ function slugify(value) {
     .replace(/^_+|_+$/g, "");
 }
 
-function normalizeRole(role) {
-  return String(role || "").trim().toLowerCase();
+function canManageCompanies() {
+  return currentUserData?.permissions?.canManageCompanies === true;
 }
 
-function canManageCompanies(userData) {
-  if (!userData) return false;
-  return userData.accountType === "managing_company" &&
-    ["owner", "account_manager"].includes(normalizeRole(userData.role));
+function canDeleteCompanies() {
+  return currentUserData?.accountType === "managing_company" && String(currentUserData?.role || "").toLowerCase() === "owner";
 }
 
-function canDeleteCompanies(userData) {
-  return userData?.accountType === "managing_company" && normalizeRole(userData?.role) === "owner";
+async function logAudit(action, targetType, targetId, details = {}) {
+  try {
+    await addDoc(collection(db, "auditLogs"), {
+      action,
+      actorUid: auth.currentUser?.uid || "unknown",
+      actorName: currentUserData?.discordUsername || "Unknown",
+      targetType,
+      targetId,
+      companyId: details.companyId || targetId || null,
+      details,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.warn("Audit logging failed:", error);
+  }
 }
 
 function buildCompanyCard(data) {
@@ -72,7 +84,7 @@ function buildCompanyCard(data) {
 
   actions.appendChild(openBtn);
 
-  if (canDeleteCompanies(currentUserData) && data.companyId !== "aegis") {
+  if (canDeleteCompanies() && data.companyId !== "aegis") {
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "secondary-btn";
     deleteBtn.type = "button";
@@ -86,6 +98,7 @@ function buildCompanyCard(data) {
 
       try {
         await deleteDoc(doc(db, "companies", data.companyId));
+        await logAudit("DELETE_COMPANY", "company", data.companyId, { companyName: data.companyName, companyId: data.companyId });
         showStatus("Company deleted successfully.");
         await loadCompanies();
       } catch (error) {
@@ -111,8 +124,8 @@ function renderCompanies(filter = "") {
 
   const normalized = filter.trim().toLowerCase();
   const filtered = companies.filter((company) =>
-    company.companyName.toLowerCase().includes(normalized) ||
-    company.companyId.toLowerCase().includes(normalized)
+    String(company.companyName || "").toLowerCase().includes(normalized) ||
+    String(company.companyId || "").toLowerCase().includes(normalized)
   );
 
   if (!filtered.length) {
@@ -134,15 +147,13 @@ onAuthStateChanged(auth, async (user) => {
   clearStatus();
 
   try {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) {
+    currentUserData = await getUserWithPermissions(db, user.uid);
+    if (!currentUserData) {
       window.location.href = "dashboard.html";
       return;
     }
 
-    currentUserData = userDoc.data();
-
-    if (!canManageCompanies(currentUserData)) {
+    if (!canManageCompanies()) {
       showStatus("You do not have permission to manage companies.");
       createCompanyForm.classList.add("hidden");
       setTimeout(() => {
@@ -161,6 +172,11 @@ onAuthStateChanged(auth, async (user) => {
 createCompanyForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   clearStatus();
+
+  if (!canManageCompanies()) {
+    showStatus("You do not have permission to create companies.");
+    return;
+  }
 
   const companyId = slugify(document.getElementById("companyIdInput").value);
   const companyName = document.getElementById("companyNameInput").value.trim();
@@ -181,6 +197,7 @@ createCompanyForm.addEventListener("submit", async (e) => {
       createdBy: auth.currentUser.uid
     });
 
+    await logAudit("CREATE_COMPANY", "company", companyId, { companyName, companyId, companyType });
     createCompanyForm.reset();
     showStatus("Company created successfully.");
     await loadCompanies();
