@@ -45,14 +45,27 @@ function setButtonBusy(button, busyText, isBusy) {
   }
 }
 
-async function loadUserByLoginKey(loginKey) {
-  const q = query(collection(db, "users"), where("loginKey", "==", loginKey));
+function slugify(value) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+async function findUser(field, value) {
+  if (!value) return null;
+  const q = query(collection(db, "users"), where(field, "==", value));
   const snapshot = await getDocs(q);
-
   if (snapshot.empty) return null;
-
   const userDoc = snapshot.docs[0];
   return { id: userDoc.id, ...userDoc.data() };
+}
+
+async function loadUserByLoginKey(input) {
+  const raw = String(input || "").trim();
+  const key = slugify(raw);
+
+  return await findUser("loginKey", key)
+    || await findUser("discordUsername", raw)
+    || await findUser("discordUsername", raw.toLowerCase())
+    || await findUser("discordUsername", raw.replaceAll("_", " "));
 }
 
 function routeAuthenticatedUser() {
@@ -60,11 +73,21 @@ function routeAuthenticatedUser() {
     loginForm.classList.add("hidden");
     passwordChangeForm.classList.remove("hidden");
     accountPanel.classList.add("hidden");
-    showStatus("You must change your password before continuing.");
+    showStatus("Password update required before continuing.");
     return;
   }
 
   window.location.href = "dashboard.html";
+}
+
+async function updateLastLogin() {
+  try {
+    await updateDoc(doc(db, "users", currentUserDoc.id), {
+      lastLoginAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.warn("Could not update lastLoginAt.", error);
+  }
 }
 
 loginForm.addEventListener("submit", async (e) => {
@@ -72,14 +95,14 @@ loginForm.addEventListener("submit", async (e) => {
   clearStatus();
   setButtonBusy(loginButton, "Signing In...", true);
 
-  const username = document.getElementById("username").value.trim().toLowerCase();
-  const password = document.getElementById("password").value;
+  const username = document.getElementById("username").value.trim();
+  const userPassword = document.getElementById("password").value;
 
   try {
     const userData = await loadUserByLoginKey(username);
 
     if (!userData) {
-      showStatus("User not found.");
+      showStatus("User not found. Check the Discord username/login key on the user record.");
       return;
     }
 
@@ -88,18 +111,18 @@ loginForm.addEventListener("submit", async (e) => {
       return;
     }
 
+    if (!userData.authEmail) {
+      showStatus("This account is missing authEmail in Firestore.");
+      return;
+    }
+
     currentUserDoc = userData;
-
-    await signInWithEmailAndPassword(auth, userData.authEmail, password);
-
-    await updateDoc(doc(db, "users", currentUserDoc.id), {
-      lastLoginAt: serverTimestamp()
-    });
-
+    await signInWithEmailAndPassword(auth, userData.authEmail, userPassword);
+    await updateLastLogin();
     routeAuthenticatedUser();
   } catch (error) {
     console.error(error);
-    showStatus("Login failed. Please verify your username and password.");
+    showStatus(`Login failed: ${error.code || error.message || "unknown error"}`);
   } finally {
     setButtonBusy(loginButton, "Signing In...", false);
   }
@@ -142,7 +165,7 @@ passwordChangeForm.addEventListener("submit", async (e) => {
     }, 700);
   } catch (error) {
     console.error(error);
-    showStatus("Password update failed. Please try again.");
+    showStatus(`Password update failed: ${error.code || error.message || "unknown error"}`);
   } finally {
     setButtonBusy(passwordChangeButton, "Updating...", false);
   }
