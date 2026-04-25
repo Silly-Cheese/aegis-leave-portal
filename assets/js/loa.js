@@ -10,8 +10,10 @@ import {
   serverTimestamp,
   doc,
   updateDoc,
-  getDoc
+  getDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getUserWithPermissions } from "./permissions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAmBLwVBVhY29tnMMHH-kVHo77OILX7PTM",
@@ -53,79 +55,87 @@ function humanize(value) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+async function logAudit(action, targetType, targetId, details = {}) {
+  try {
+    await addDoc(collection(db, "auditLogs"), {
+      action,
+      actorUid: currentUser?.uid || "unknown",
+      actorName: currentUserData?.discordUsername || "Unknown",
+      targetType,
+      targetId,
+      companyId: details.companyId || currentUserData?.companyId || null,
+      details,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.warn("Audit logging failed:", error);
+  }
+}
+
 function canApprove() {
-  if (!currentUserData) return false;
+  return currentUserData?.permissions?.canApproveLoas === true;
+}
 
-  if (currentUserData.accountType === "managing_company") {
-    return ["owner", "account_manager"].includes(currentUserData.role);
-  }
-
-  if (currentUserData.accountType === "customer") {
-    return ["company_owner", "loa_manager"].includes(currentUserData.role);
-  }
-
-  return false;
+function canDeleteLoa(loaData) {
+  if (currentUserData?.permissions?.canDeleteLoas !== true) return false;
+  if (currentUserData.accountType === "managing_company") return true;
+  return loaData.companyId === currentUserData.companyId;
 }
 
 function canEndEarly(loaData) {
-  if (!currentUserData) return false;
-
-  if (currentUserData.accountType === "managing_company") {
-    if (["owner", "account_manager"].includes(currentUserData.role)) {
-      return true;
-    }
-    return false;
-  }
-
-  if (currentUserData.accountType === "customer") {
-    if (loaData.companyId !== currentUserData.companyId) return false;
-
-    if (currentUserData.role === "company_owner") {
-      return ["loa_manager", "staff"].includes(loaData.requesterRole);
-    }
-
-    if (currentUserData.role === "loa_manager") {
-      return loaData.requesterRole === "staff";
-    }
-  }
-
-  return false;
+  if (currentUserData?.permissions?.canEndLoasEarly !== true) return false;
+  if (loaData.status !== "approved") return false;
+  if (currentUserData.accountType === "managing_company") return true;
+  return loaData.companyId === currentUserData.companyId;
 }
 
 function canSeeApproval(loaData) {
   if (!canApprove()) return false;
   if (loaData.status !== "pending") return false;
-
-  if (currentUserData.accountType === "managing_company") {
-    return true;
-  }
-
-  if (currentUserData.accountType === "customer") {
-    if (loaData.companyId !== currentUserData.companyId) return false;
-
-    if (currentUserData.role === "company_owner") {
-      return true;
-    }
-
-    if (currentUserData.role === "loa_manager") {
-      return loaData.requesterRole === "staff";
-    }
-  }
-
-  return false;
+  if (currentUserData.accountType === "managing_company") return true;
+  return loaData.companyId === currentUserData.companyId;
 }
 
-function buildLoaCard(data) {
+function buildLoaCard(id, data) {
   const div = document.createElement("div");
   div.className = "loa-card";
 
   div.innerHTML = `
-    <strong>${data.startDate} → ${data.endDate}</strong>
-    <p>${data.reason}</p>
+    <strong>${data.startDate || "—"} → ${data.endDate || "—"}</strong>
+    <p>${data.reason || "No reason provided."}</p>
     <span>Status: ${humanize(data.status)}</span>
-    <span>Company: ${data.companyName || data.companyId}</span>
+    <span>Company: ${data.companyName || data.companyId || "—"}</span>
   `;
 
+  const actions = document.createElement("div");
+  actions.className = "button-grid";
+
+  if (canDeleteLoa(data)) {
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "secondary-btn";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Delete LOA";
+    deleteBtn.addEventListener("click", async () => {
+      const confirmation = prompt("Type DELETE to permanently delete this LOA.");
+      if (confirmation !== "DELETE") {
+        showStatus("LOA deletion cancelled.");
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, "loas", id));
+        await logAudit("DELETE_LOA", "loa", id, { companyId: data.companyId, requesterName: data.requesterName || null });
+        showStatus("LOA deleted successfully.");
+        await refreshAll();
+      } catch (error) {
+        console.error(error);
+        showStatus("Failed to delete LOA.");
+      }
+    });
+    actions.appendChild(deleteBtn);
+  }
+
+  if (actions.children.length) div.appendChild(actions);
   return div;
 }
 
@@ -134,10 +144,11 @@ function buildApprovalCard(id, data) {
   div.className = "loa-card";
 
   div.innerHTML = `
-    <strong>${data.startDate} → ${data.endDate}</strong>
-    <p>${data.reason}</p>
+    <strong>${data.startDate || "—"} → ${data.endDate || "—"}</strong>
+    <p>${data.reason || "No reason provided."}</p>
+    <span>Requester: ${data.requesterName || data.requesterUid || "Unknown"}</span>
     <span>Requester Role: ${humanize(data.requesterRole)}</span>
-    <span>Company: ${data.companyName || data.companyId}</span>
+    <span>Company: ${data.companyName || data.companyId || "—"}</span>
     <div class="button-grid">
       <button class="primary-btn" data-id="${id}" data-action="approve">Approve</button>
       <button class="secondary-btn" data-id="${id}" data-action="deny">Deny</button>
@@ -152,8 +163,9 @@ function buildActiveManagementCard(id, data) {
   div.className = "loa-card";
 
   div.innerHTML = `
-    <strong>${data.startDate} → ${data.endDate}</strong>
-    <p>${data.reason}</p>
+    <strong>${data.startDate || "—"} → ${data.endDate || "—"}</strong>
+    <p>${data.reason || "No reason provided."}</p>
+    <span>Requester: ${data.requesterName || data.requesterUid || "Unknown"}</span>
     <span>Requester Role: ${humanize(data.requesterRole)}</span>
     <span>Status: ${humanize(data.status)}</span>
     <div class="button-grid">
@@ -174,17 +186,13 @@ onAuthStateChanged(auth, async (user) => {
   clearStatus();
 
   try {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) {
+    currentUserData = await getUserWithPermissions(db, user.uid);
+    if (!currentUserData) {
       showStatus("Your user record could not be found.");
       return;
     }
 
-    currentUserData = userDoc.data();
-
-    await loadOwnLoas();
-    await loadApprovals();
-    await loadActiveManagedLoas();
+    await refreshAll();
   } catch (error) {
     console.error(error);
     showStatus("Failed to load LOA data.");
@@ -210,7 +218,7 @@ loaForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    await addDoc(collection(db, "loas"), {
+    const newLoa = await addDoc(collection(db, "loas"), {
       requesterUid: currentUser.uid,
       requesterRole: currentUserData.role,
       requesterName: currentUserData.discordUsername,
@@ -231,11 +239,10 @@ loaForm.addEventListener("submit", async (e) => {
       actualEndDate: null
     });
 
+    await logAudit("CREATE_LOA", "loa", newLoa.id, { companyId: currentUserData.companyId, requesterName: currentUserData.discordUsername });
     loaForm.reset();
     showStatus("LOA submitted successfully.");
-    await loadOwnLoas();
-    await loadApprovals();
-    await loadActiveManagedLoas();
+    await refreshAll();
   } catch (error) {
     console.error(error);
     showStatus("Failed to submit LOA.");
@@ -254,7 +261,7 @@ async function loadOwnLoas() {
   }
 
   snapshot.forEach((docSnap) => {
-    loaList.appendChild(buildLoaCard(docSnap.data()));
+    loaList.appendChild(buildLoaCard(docSnap.id, docSnap.data()));
   });
 }
 
@@ -274,7 +281,6 @@ async function loadApprovals() {
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
     if (!canSeeApproval(data)) return;
-
     found = true;
     approvalList.appendChild(buildApprovalCard(docSnap.id, data));
   });
@@ -294,9 +300,7 @@ async function loadActiveManagedLoas() {
 
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
-    if (data.status !== "approved") return;
     if (!canEndEarly(data)) return;
-
     found = true;
     activeLoaList.appendChild(buildActiveManagementCard(docSnap.id, data));
   });
@@ -308,6 +312,12 @@ async function loadActiveManagedLoas() {
 
   activeManagementPanel.classList.remove("hidden");
   attachEndEarlyHandlers();
+}
+
+async function refreshAll() {
+  await loadOwnLoas();
+  await loadApprovals();
+  await loadActiveManagedLoas();
 }
 
 function attachApprovalHandlers() {
@@ -323,10 +333,9 @@ function attachApprovalHandlers() {
           reviewedBy: currentUser.uid
         });
 
+        await logAudit(action === "approve" ? "APPROVE_LOA" : "DENY_LOA", "loa", id, { reviewer: currentUserData.discordUsername });
         showStatus(`LOA ${action === "approve" ? "approved" : "denied"} successfully.`);
-        await loadOwnLoas();
-        await loadApprovals();
-        await loadActiveManagedLoas();
+        await refreshAll();
       } catch (error) {
         console.error(error);
         showStatus("Failed to update LOA.");
@@ -368,10 +377,9 @@ function attachEndEarlyHandlers() {
           endedEarlyReason: reason.trim()
         });
 
+        await logAudit("END_LOA_EARLY", "loa", id, { reason: reason.trim(), requesterName: loaData.requesterName || null });
         showStatus("LOA ended early successfully.");
-        await loadOwnLoas();
-        await loadApprovals();
-        await loadActiveManagedLoas();
+        await refreshAll();
       } catch (error) {
         console.error(error);
         showStatus("Failed to end LOA early.");
